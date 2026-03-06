@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>SPARTAN ARMORY</title>
+<style>
+  :root {
+    --bg-primary: #0a0c10;
+    --bg-secondary: #12151c;
+    --bg-card: #181c26;
+    --bg-card-hover: #1e2433;
+    --bg-card-active: #1a2a3a;
+    --accent: #00d4ff;
+    --accent-dim: #007a94;
+    --accent-glow: rgba(0, 212, 255, 0.15);
+    --text-primary: #e0e6f0;
+    --text-secondary: #7a8599;
+    --text-dim: #4a5568;
+    --border: #2a3040;
+    --border-active: #00d4ff;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { font-size: 14px; -webkit-text-size-adjust: 100%; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  body::after {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+    pointer-events: none;
+    z-index: 9999;
+  }
+  .header {
+    text-align: center;
+    padding: 1.2rem 1rem 0.8rem;
+    background: linear-gradient(180deg, #0f1218 0%, var(--bg-primary) 100%);
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 10%; right: 10%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  }
+  .header-subtitle {
+    font-size: 0.65rem;
+    letter-spacing: 0.5em;
+    color: var(--accent-dim);
+    text-transform: uppercase;
+    margin-bottom: 0.2rem;
+  }
+  .header h1 {
+    font-size: 1.8rem;
+    font-weight: 900;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    background: linear-gradient(180deg, #ffffff 0%, var(--accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .header-line {
+    font-size: 0.6rem;
+    letter-spacing: 0.3em;
+    color: var(--text-dim);
+    margin-top: 0.3rem;
+    text-transform: uppercase;
+  }
+  .app-container {
+    display: flex;
+    flex-direction: column;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  @media (min-width: 768px) {
+    .app-container { flex-direction: row; padding: 1rem; gap: 1.5rem; }
+  }
+  .preview-panel {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem;
+  }
+  @media (min-width: 768px) {
+    .preview-panel { flex: 0 0 380px; position: sticky; top: 1rem; align-self: flex-start; }
+  }
+  .spartan-preview {
+    width: 100%;
+    max-width: 320px;
+    aspect-ratio: 3 / 5;
+    background: radial-gradient(ellipse at center bottom, rgba(0,212,255,0.05) 0%, transparent 70%), var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: glowPulse 4s ease-in-out infinite;
+  }
+  .spartan-preview::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 85%, rgba(0,212,255,0.08) 100%), radial-gradient(ellipse at 50% 100%, rgba(0,212,255,0.06) 0%, transparent 50%);
+    pointer-events: none;
+  }
+  .spartan-preview svg { width: 90%; height: 90%; }
+  .spartan-name-display { text-align: center; margin-top: 0.8rem; width: 100%; max-width: 320px; }
+  .spartan-tag { font-size: 0.6rem; letter-spacing: 0.3em; color: var(--text-dim); text-transform: uppercase; }
+  .spartan-name {
+    font-size: 1.2rem; font-weight: 700; letter-spacing: 0.15em; color: var(--accent);
+    cursor: pointer; transition: color 0.2s; text-transform: uppercase;
+  }
+  .spartan-name:hover { color: #fff; }
+  .loadout-summary {
+    width: 100%; max-width: 320px; margin-top: 0.8rem; padding: 0.8rem;
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; font-size: 0.75rem;
+  }
+  .loadout-summary h3 { font-size: 0.65rem; letter-spacing: 0.2em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 0.5rem; }
+  .summary-row { display: flex; justify-content: space-between; padding: 0.2rem 0; border-bottom: 1px solid rgba(42,48,64,0.5); }
+  .summary-row:last-child { border-bottom: none; }
+  .summary-label { color: var(--text-secondary); }
+  .summary-value { color: var(--text-primary); font-weight: 600; }
+  .action-bar { display: flex; gap: 0.5rem; margin-top: 0.8rem; width: 100%; max-width: 320px; }
+  .btn {
+    flex: 1; padding: 0.6rem 0.5rem; border: 1px solid var(--border); background: var(--bg-card);
+    color: var(--text-primary); font-size: 0.7rem; font-weight: 600; letter-spacing: 0.1em;
+    text-transform: uppercase; border-radius: 4px; cursor: pointer; transition: all 0.2s; text-align: center;
+  }
+  .btn:hover { background: var(--bg-card-hover); border-color: var(--accent-dim); }
+  .btn:active { transform: scale(0.97); }
+  .btn-accent { border-color: var(--accent-dim); background: rgba(0,212,255,0.1); color: var(--accent); }
+  .btn-accent:hover { background: rgba(0,212,255,0.2); border-color: var(--accent); box-shadow: 0 0 15px rgba(0,212,255,0.2); }
+  .customize-panel { flex: 1; padding: 1rem; overflow-y: auto; }
+  .section { margin-bottom: 1.5rem; animation: fadeIn 0.4s ease; }
+  .section-header {
+    display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.8rem;
+    padding-bottom: 0.4rem; border-bottom: 1px solid var(--border);
+  }
+  .section-icon { width: 16px; height: 16px; fill: var(--accent); }
+  .section-title { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.25em; text-transform: uppercase; color: var(--text-secondary); }
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 0.5rem; }
+  .armor-card {
+    padding: 0.6rem 0.4rem; background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 6px; text-align: center; cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden;
+  }
+  .armor-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: var(--accent); transform: scaleX(0); transition: transform 0.2s;
+  }
+  .armor-card:hover { background: var(--bg-card-hover); border-color: var(--accent-dim); }
+  .armor-card.active {
+    background: var(--bg-card-active); border-color: var(--accent);
+    box-shadow: 0 0 12px rgba(0,212,255,0.15), inset 0 0 12px rgba(0,212,255,0.05);
+  }
+  .armor-card.active::before { transform: scaleX(1); }
+  .card-name { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.05em; color: var(--text-primary); }
+  .armor-card.active .card-name { color: var(--accent); }
+  .card-desc { font-size: 0.55rem; color: var(--text-dim); margin-top: 0.2rem; }
+  .color-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.8rem; flex-wrap: wrap; }
+  .color-label { font-size: 0.7rem; font-weight: 600; color: var(--text-secondary); letter-spacing: 0.1em; text-transform: uppercase; min-width: 80px; }
+  .color-picker-wrap {
+    position: relative; width: 36px; height: 36px; border-radius: 50%;
+    border: 2px solid var(--border); overflow: hidden; cursor: pointer; transition: border-color 0.2s;
+  }
+  .color-picker-wrap:hover { border-color: var(--accent); }
+  .color-picker-wrap input[type="color"] {
+    position: absolute; top: -4px; left: -4px; width: 44px; height: 44px; border: none; cursor: pointer; background: transparent;
+  }
+  .visor-presets { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .visor-btn {
+    width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--border);
+    cursor: pointer; transition: all 0.2s; position: relative;
+  }
+  .visor-btn:hover { transform: scale(1.1); border-color: var(--accent-dim); }
+  .visor-btn.active { border-color: var(--accent); box-shadow: 0 0 10px rgba(0,212,255,0.3); }
+  .visor-btn::after {
+    content: attr(data-name); position: absolute; bottom: -16px; left: 50%; transform: translateX(-50%);
+    font-size: 0.5rem; color: var(--text-dim); white-space: nowrap;
+  }
+  .toast {
+    position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(100px);
+    background: var(--bg-card); border: 1px solid var(--accent); color: var(--accent);
+    padding: 0.8rem 1.5rem; border-radius: 6px; font-size: 0.75rem; font-weight: 600;
+    letter-spacing: 0.1em; z-index: 1000; transition: transform 0.3s ease; pointer-events: none;
+    box-shadow: 0 4px 20px rgba(0,212,255,0.2);
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  @media (max-width: 767px) {
+    .header h1 { font-size: 1.4rem; letter-spacing: 0.15em; }
+    .spartan-preview { max-width: 260px; }
+    .card-grid { grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); }
+    .action-bar { flex-wrap: wrap; }
+    .action-bar .btn { flex: 1 1 45%; }
+  }
+  @media (max-width: 380px) {
+    html { font-size: 12px; }
+    .card-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes glowPulse {
+    0%, 100% { box-shadow: 0 0 10px rgba(0,212,255,0.1); }
+    50% { box-shadow: 0 0 20px rgba(0,212,255,0.25); }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-subtitle">UNSC Infinity &mdash; Req/Auth S-III</div>
+  <h1>SPARTAN ARMORY</h1>
+  <div class="header-line">Mjolnir Powered Assault Armor &mdash; GEN2 Configuration</div>
+</div>
+
+<div class="app-container">
+  <div class="preview-panel">
+    <div class="spartan-preview" id="spartanPreview">
+      <svg id="spartanSVG" viewBox="0 0 300 500" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+    <div class="spartan-name-display">
+      <div class="spartan-tag">Spartan Designation</div>
+      <div class="spartan-name" id="spartanName" onclick="generateName()" title="Click to regenerate">NOBLE-117</div>
+    </div>
+    <div class="loadout-summary" id="loadoutSummary">
+      <h3>Loadout Configuration</h3>
+      <div class="summary-row"><span class="summary-label">Helmet</span><span class="summary-value" id="sumHelmet">Mark VI</span></div>
+      <div class="summary-row"><span class="summary-label">Chest</span><span class="summary-value" id="sumChest">Default</span></div>
+      <div class="summary-row"><span class="summary-label">Shoulders</span><span class="summary-value" id="sumShoulders">Default</span></div>
+      <div class="summary-row"><span class="summary-label">Visor</span><span class="summary-value" id="sumVisor">Gold</span></div>
+      <div class="summary-row"><span class="summary-label">Primary</span><span class="summary-value" id="sumPrimary">OD Green</span></div>
+      <div class="summary-row"><span class="summary-label">Secondary</span><span class="summary-value" id="sumSecondary">Dark Green</span></div>
+    </div>
+    <div class="action-bar">
+      <button class="btn btn-accent" onclick="randomLoadout()">&#9889; Random</button>
+      <button class="btn" onclick="shareLoadout()">&#128279; Share</button>
+      <button class="btn" onclick="resetLoadout()">&#8634; Reset</button>
+    </div>
+  </div>
+
+  <div class="customize-panel">
+    <div class="section">
+      <div class="section-header">
+        <svg class="section-icon" viewBox="0 0 16 16"><path d="M8 1C4.5 1 2 3.5 2 6.5V10c0 1.1.9 2 2 2h1v-3H4V6.5C4 4.6 5.8 3 8 3s4 1.6 4 3.5V9h-1v3h1c1.1 0 2-.9 2-2V6.5C14 3.5 11.5 1 8 1z"/></svg>
+        <span class="section-title">Helmet</span>
+      </div>
+      <div class="card-grid" id="helmetGrid"></div>
+    </div>
+    <div class="section">
+      <div class="section-header">
+        <svg class="section-icon" viewBox="0 0 16 16"><path d="M3 3h10v8c0 1.1-.9 2-2 2H5c-1.1 0-2-.9-2-2V3zm1 1v7c0 .6.4 1 1 1h6c.6 0 1-.4 1-1V4H4z"/></svg>
+        <span class="section-title">Chest Plate</span>
+      </div>
+      <div class="card-grid" id="chestGrid"></div>
+    </div>
+    <div class="section">
+      <div class="section-header">
+        <svg class="section-icon" viewBox="0 0 16 16"><path d="M1 6c0-1 1-2 3-3h8c2 1 3 2 3 3v2c0 1-1 2-2 2H3c-1 0-2-1-2-2V6zm2 0v2h10V6H3z"/></svg>
+        <span class="section-title">Shoulders</span>
+      </div>
+      <div class="card-grid" id="shoulderGrid"></div>
+    </div>
+    <div class="section">
+      <div class="section-header">
+        <svg class="section-icon" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="3"/></svg>
+        <span class="section-title">Visor Color</span>
+      </div>
+      <div class="color-row">
+        <div class="visor-presets" id="visorPresets"></div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-header">
+        <svg class="section-icon" viewBox="0 0 16 16"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 2a5 5 0 014.5 7.2L8 8V3z"/></svg>
+        <span class="section-title">Armor Colors</span>
+      </div>
+      <div class="color-row">
+        <span class="color-label">Primary</span>
+        <div class="color-picker-wrap"><input type="color" id="primaryColor" value="#5b8c3e" oninput="updateColors()"></div>
+      </div>
+      <div class="color-row">
+        <span class="color-label">Secondary</span>
+        <div class="color-picker-wrap"><input type="color" id="secondaryColor" value="#4a7232" oninput="updateColors()"></div>
+      </div>
+      <div class="card-grid" id="colorPresetGrid" style="margin-top:0.6rem;"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+var HELMETS = [
+  {id:'mark-v',name:'Mark V',desc:'Classic GEN1'},
+  {id:'mark-vi',name:'Mark VI',desc:'Standard GEN2'},
+  {id:'eva',name:'EVA',desc:'Extra-Vehicular'},
+  {id:'recon',name:'Recon',desc:'Stealth Ops'},
+  {id:'odst',name:'ODST',desc:'Drop Shock'},
+  {id:'hayabusa',name:'Hayabusa',desc:'Mythic'},
+  {id:'cqb',name:'CQB',desc:'Close Quarters'},
+  {id:'security',name:'Security',desc:'Heavy Guard'},
+  {id:'eod',name:'EOD',desc:'Bomb Disposal'},
+  {id:'scout',name:'Scout',desc:'Recon Light'}
+];
+var CHESTS = [
+  {id:'default',name:'Default',desc:'Standard Issue'},
+  {id:'tactical',name:'Tactical',desc:'Extra Pouches'},
+  {id:'assault',name:'Assault',desc:'Heavy Plating'},
+  {id:'recon',name:'Recon',desc:'Stealth Profile'},
+  {id:'hp-halo',name:'HP/HALO',desc:'Jump Rig'},
+  {id:'collar',name:'Collar',desc:'Gorget Armor'}
+];
+var SHOULDERS = [
+  {id:'default',name:'Default',desc:'Standard'},
+  {id:'security',name:'Security',desc:'Heavy Plate'},
+  {id:'odst',name:'ODST',desc:'Rounded'},
+  {id:'mark-v',name:'Mark V',desc:'Classic'},
+  {id:'gungnir',name:'Gungnir',desc:'Angular'},
+  {id:'jfo',name:'JFO',desc:'Joint Fires'}
+];
+var VISOR_COLORS = [
+  {id:'gold',name:'Gold',color:'#c8a820'},
+  {id:'blue',name:'Blue',color:'#2090d0'},
+  {id:'silver',name:'Silver',color:'#b0b8c8'},
+  {id:'red',name:'Red',color:'#d03030'},
+  {id:'green',name:'Green',color:'#30b848'},
+  {id:'orange',name:'Orange',color:'#e87820'},
+  {id:'purple',name:'Purple',color:'#9040d0'},
+  {id:'black',name:'Onyx',color:'#282830'}
+];
+var COLOR_PRESETS = [
+  {name:'OD Green',primary:'#5b8c3e',secondary:'#4a7232'},
+  {name:'Cobalt',primary:'#2858a8',secondary:'#1e4080'},
+  {name:'Crimson',primary:'#a82020',secondary:'#801818'},
+  {name:'Steel',primary:'#707888',secondary:'#585e6c'},
+  {name:'Gold',primary:'#b89830',secondary:'#907020'},
+  {name:'White',primary:'#c8ccd0',secondary:'#a0a8b0'},
+  {name:'Black',primary:'#2d2d35',secondary:'#1a1a22'},
+  {name:'Sage',primary:'#608060',secondary:'#486048'},
+  {name:'Violet',primary:'#7838a0',secondary:'#582880'},
+  {name:'Orange',primary:'#c86820',secondary:'#a05018'},
+  {name:'Cyan',primary:'#20a0b0',secondary:'#188090'},
+  {name:'Pink',primary:'#c04880',secondary:'#983868'}
+];
+var SPARTAN_PREFIXES = ['NOBLE','SIERRA','BLUE','RED','GOLD','ECHO','VIPER','GHOST','WOLF','HAWK','IRON','STORM','APEX','REAPER','SHADOW','FORGE','BLADE','TITAN','WRAITH','ONYX','SABRE','TALON','RAVEN','EMBER','FROST'];
+
+function spartanNumber() {
+  var r = Math.random();
+  if (r < 0.3) return String(Math.floor(Math.random()*900)+100);
+  if (r < 0.7) return String(Math.floor(Math.random()*90)+10);
+  return 'S-' + String(Math.floor(Math.random()*400)+1);
+}
+
+var state = {
+  helmet:'mark-vi', chest:'default', shoulders:'default',
+  visor:'gold', primary:'#5b8c3e', secondary:'#4a7232', name:'NOBLE-117'
+};
+
+function getHelmetSVG(id,p,s,v) {
+  var h = {
+    'mark-v': '<path d="M114 32 Q114 10 150 7 Q186 10 186 32 L190 68 Q190 98 150 100 Q110 98 110 68 Z" fill="'+p+'" stroke="#2d2d35" stroke-width="2.5"/><path d="M132 12 Q150 5 168 12" fill="none" stroke="'+s+'" stroke-width="2.5" stroke-linecap="round"/><rect x="110" y="58" width="7" height="16" rx="2" fill="#2d2d35"/><rect x="183" y="58" width="7" height="16" rx="2" fill="#2d2d35"/><path d="M126 45 Q150 38 174 45 L176 70 Q150 80 124 70 Z" fill="'+v+'" stroke="#2d2d35" stroke-width="2" filter="url(#visorGlow)" opacity="0.9"/><path d="M131 48 Q149 42 167 48 L165 55 Q149 49 133 55 Z" fill="rgba(255,255,255,0.25)"/><path d="M128 82 Q150 92 172 82 L174 76 Q150 86 126 76 Z" fill="'+s+'" stroke="#2d2d35" stroke-width="1.5"/><rect x="120" y="30" width="60" height="3" rx="1.5" fill="'+s+'" opacity="0.7"/>',
+    'mark-vi': '<path d="M112 30 Q112 8 150 5 Q188 8 188 30 L192 65 Q192 100 150 102 Q108 100 108 65 Z" fill="'+p+'" stroke="#2d2d35" stroke-width="2.5"/><path d="M130 10 Q150 3 170 10" fill="none" stroke="'+s+'" stroke-width="3" stroke-linecap="round"/><rect x="108" y="55" width="8" height="18" rx="2" fill="#2d2d35"/><rect x="184" y="55" width="8" height="18" rx="2" fill="#2d2d35"/><path d="M125 85 Q150 95 175 85 L178 75 Q150 88 122 75 Z" fill="'+s+'" stroke="#2d2d35" stroke-width="1.5"/><path d="M122 42 Q150 36 178 42 L180 68 Q150 78 120 68 Z" fill="'+v+'" stroke="#2d2d35" stroke-width="2" filter="url(#visorGlow)" opacity="0.9"/><path d="M128 45 Q148 40 168 45 L166 52 Q148 47 130 52 Z" fill="rgba(255,255,255,0.25)"/><path d="M118 40 L182 40" stroke="'+s+'" stroke-width="3" stroke-linecap="round"/>',
+    'eva': '<path d="M110 35 Q110 8 150 5 Q190 8 190 35 L192 65 Q192 98 150 100 Q108 98 108 65 Z" fill="'+p+'" stroke="#2d2d35" stroke-width="2.5"/><path d="M132 10 Q150 4 168 10" fill="none" stroke="'+s+'" stroke-width="2" stroke-linecap="round"/><ellipse cx="150" cy="55" rx="38" ry="28" fill="'+v+'" stroke="#2d2d35" stroke-width="2.5" filter="url(#visorGlow)" opacity="0.9"/><ellipse cx="145" cy="48" rx="20" ry="12" fill="rgba(255,255,255,0.2)"/><path d="M125 88 Q150 95 175 88" fill="none" stroke="'+s+'" stroke-width="2"/><circle cx="110" cy="50" r="4" fill="#2d2d35"/><circle cx="190" cy="50" r="4" fill="#2d2d35"/>',
+    'recon': '<path d="M112 30 Q112 8 150 5 Q188 8 188 30 L192 65 Q192 100 150 102 Q108 100 108 65 Z" fill="'+p+'" stroke="#2d2d35" stroke-width="2.5"/><path d="M128 8 Q150 2 172 8" fill="none" stroke="'+s+'" stroke-width="3" stroke-linecap="round"/><rect x="106" y="50" width="10" height="22" rx="3" fill="#2d2d35"/><rect x="184" y="50" width="10" height="22" rx="3" fill="#2d2d35"/><path d="M122 42 Q150 36 178 42 L180 65 Q150 75 120 65 Z" fill="'+v+'" stroke="#2d2d35" stroke-width="2" filter="url(#visorGlow)" opacity="0.9"/><path d="M128 45 Q148 40 168 45 L166 52 Q148 47 130 52 Z" fill="rgba(255,255,255,0.25)"/><path d="M122 85 Q150 97 178 85 L180 78 Q150 90 120 78 Z" fill="'+s+'" stroke="#2d2d35" stroke-width="1.5"/><path d="M140 25 L160 25 L162 35 L138 35 Z" fill="'+s+'" stroke="#2d2d35" stroke-width="1"/><circle cx="150" cy="30" r="3" fill="#2d2d35"/>',
+    'odst': '<path d="M114 28 Q114 8 150 5 Q186 8 186 28 L190 70 Q190 100 150 102 Q110 100 110 70 Z" fill="'+p+'" stroke="#2d2d35" stroke-width="2.5"/><path d="M134 8 Q150 3 166 8" fill="none" stroke="'+s+'" stroke-width="2.5" stroke-linecap="round"/><rect x="110" y="55" width="8" height="20" rx="2" fill="#2d2d35"/><rect x="182" y="55" width="8" height="20" rx="2" fill="#2d2d35"/><path d="M124 44 Q150 38 176 44 L178 66 Q150 74 122 66 Z" fill="'+v+'" stroke="#2d2d35" stroke-width="2" filter="url(#visorGlow)" opacity="0.9"/><path d="M129 47 Q149 42 169 47 L168 54 Q149 49 130 54 Z" fill="rgba(255,255,255,0.25)"/><path d="M130 82 Q150 92 170 82 L172 76 Q150 86 128 76 Z" fill="'+s+'" stroke="#2d2d35" stroke-width="1.5"/><path d="M115 40 L185 40" stroke="'+s+'" stroke-width="2.5"/><path d="M135 78 L148 86 L150 80" fill="none" stroke="#2d2d35" stroke-width="1.5"/><path d="M165 78 L152 86 L150 80" fill="none" stroke="#2d2d35" stroke-width="1.5"/>',
+    'hayabusa': '<path d="M112 28 Q112 6 150 3 Q188 6 188 28 L192 65 Q192 100 150 102 Q108 100 108 65 Z" fill="'+p+'" stroke="#2d2d35" stroke-width="2.5"/><path d="M150 2 L150 15" stroke="'+s+'" stroke-width="3" stroke-linecap="round"/><path d="M108 30 L95 18 L100 32" fill="'+s+'" stroke="#2d2d35" stroke-width="1.5"/><path d="M192 30 L205 18 L200 32" fill="'+s+'" stroke="#2d2d35" stroke-width="1.5"/><rect x="108" y="55" width="8" height="18" rx="2" fill="#2d2d35"/><rect x="184" y="55" width="8" height="18" rx="2" fill="#2d2d35"/><path d="M122 42 Q150 36 178 42 L180 65 Q150 75 120 65 Z" fill="'+v+'" stroke="#2d2d35" stroke-width="2" filter="url(#visorGlow)" opacity="0.9"/><path d="M128 45 Q148 40 168 45 L166 52 Q148 47 130 52 Z" fill="rgba(255,255,255,0.25)"/><path d="M125 85 Q150 96 175 85 L178 78 Q150 89 122 78 Z" fill="'+s+'" stroke="#2d2d35" stroke-width="1.5"/><path d="M135 78 L140 90 L145 82" fill="'+s+'" stroke="#2d2d35" stroke-width="1"/><path d="M155 82 L160 90 L165 78" fill="'+s+'" stroke="#2d2d35" stroke-width="1"/>',
+    'cqb': '<path d="M112 30 Q112 10 150 7 Q188 10 188 30 L190 65 Q190 98 150 100 Q110 98 110 65 Z" fill="'+p+'" stroke="#2d2d35" stroke-width="2.5"/><path d="M130 12 Q150 5 170 12" fill="none" stroke="'+s+'" stroke-width="2.5" stroke-linecap="round"/><rect x="108" y="52" width="9" height="20" rx="3" fill="#2d2d35"/><rect x="183" y="52" width="9" height="20" rx="3" fill="#2d2d35"/><path d="M120 42 Q150 35 180 42 L182 68 Q150 78 118 68 Z" fill="'+v+'" stroke="#2d2d35" stroke-width="2" filter="url(#visorGlow)" opacity="0.9"/><path d="M126 45 Q148 39 174 45 L172 52 Q148 46 128 52 Z" fill="rgba(255,255,255,0.25)"/><path d="M128 82 Q150 92 172 82" fill="none" stroke="'+s+'" stroke-width="2.5"/><rect x="135" y="22" width="30" height="10" rx="3" fill="'+s+'" stroke="#2d2d35" stroke-width="1.5"/><rect x="140" y="24" width="20" height="6" rx="2" fill="rgba(0,0,0,0.3)"/>',
+    'security': '<path d="M110 32 Q110 8 150 5 Q190 8 190 32 L194 68 Q194 102 150 104 Q106 102 106 68 Z" fill="'+p+'" stroke="#2d2d35" stroke-width="2.5"/><path d="M128 10 Q150 3 172 10" fill="none" stroke="'+s+'" stroke-width="3" stroke-linecap="round"/><rect x="106" y="52" width="10" height="22" rx="3" fill="'+s+'" stroke="#2d2d35" stroke-width="1.5"/><rect x="184" y="52" width="10" height="22" rx="3" fill="'+s+'" stroke="#2d2d35" stroke-width="1.5"/><path d="M120 42 Q150 34 180 42 L182 70 Q150 82 118 70 Z" fill="'+v+'" stroke="#2d2d35" stroke-width="2.5" filter="url(#visorGlow)" opacity="0.9"/><path d="M127 45 Q149 38 173 45 L171 55 Q149 47 129 55 Z" fill="rgba(255,255,255,0.25)"/><path d="M125 88 Q150 98 175 88 L178 80 Q150 92 122 80 Z" fill="'+s+'" stroke="#2d2d35" stroke-width="1.5"/><path d="M115 38 L185 38" stroke="'+s+'" stroke-width="3" stroke-linecap="round"/><path d="M115 42 L115 48" stroke="'+s+'" stroke-width="2"/><path d="M185 42 L185 48" stroke="'+s+'" stroke-width="2"/>',
+    'eod': '<path d="M110 30 Q110 6 150 3 Q190 6 190 30 L194 68 Q194 105 150 107 Q106 105 106 68 Z" fill="'+p+'" stroke="#2d2d35" stroke-width="2.5"/><path d="M130 8 Q150 2 170 8" fill="none" stroke="'+s+'" stroke-width="3" stroke-linecap="round"/><rect x="106" y="50" width="10" height="25" rx="3" fill="'+s+'" stroke="#2d2d35" stroke-width="1.5"/><rect x="184" y="50" width="10" height="25" rx="3" fill="'+s+'" stroke="#2d2d35" stroke-width="1.5"/><path d="M120 44 Q150 37 180 44 L182 72 Q150 83 118 72 Z" fill="'+v+'" stroke="#2d2d35" stroke-width="2.5" filter="url(#visorGlow)" opacity="0.9"/><path d="M127 47 Q149 41 173 47 L171 56 Q149 49 129 56 Z" fill="rgba(255,255,255,0.25)"/><path d="M128 90 Q150 100 172 90 L175 82 Q150 94 125 82 Z" fill="'+s+'" stroke="#2d2d35" stroke-width="1.5"/><path d="M145 20 L155 20 L156 30 L144 30 Z" fill="'+s+'" stroke="#2d2d35" stroke-width="1"/><rect x="147" y="22" width="6" height="6" rx="1" fill="rgba(0,0,0,0.3)"/><path d="M135 78 L150 88 L165 78" fill="none" stroke="#2d2d35" stroke-width="2"/>',
+    'scout': '<path d="M114 32 Q114 10 150 7 Q186 10 186 32 L189 65 Q189 98 150 100 Q111 98 111 65 Z" fill="'+p+'" stroke="#2d2d35" stroke-width="2.5"/><path d="M132 12 Q150 5 168 12" fill="none" stroke="'+s+'" stroke-width="2" stroke-linecap="round"/><rect x="111" y="55" width="7" height="16" rx="2" fill="#2d2d35"/><rect x="182" y="55" width="7" height="16" rx="2" fill="#2d2d35"/><path d="M124 44 Q150 38 176 44 L178 66 Q150 76 122 66 Z" fill="'+v+'" stroke="#2d2d35" stroke-width="2" filter="url(#visorGlow)" opacity="0.9"/><path d="M130 47 Q148 42 170 47 L168 54 Q148 48 132 54 Z" fill="rgba(255,255,255,0.25)"/><path d="M128 84 Q150 94 172 84 L174 78 Q150 88 126 78 Z" fill="'+s+'" stroke="#2d2d35" stroke-width="1.5"/><circle cx="180" cy="42" r="5" fill="'+s+'" stroke="#2d2d35" stroke-width="1.5"/><circle cx="180" cy="42" r="2" fill="#2d2d35"/>'
+  };
+  return h[id] || h['mark-vi'];
+}
+
+function getChestDetailSVG(id,p,s) {
+  var d = {
+    'default': '<rect x="122" y="135" width="22" height="18" rx="3" fill="rgba(0,0,0,0.2)" stroke="rgba(255,255,255,0.08)" stroke-width="1"/><rect x="156" y="135" width="22" height="18" rx="3" fill="rgba(0,0,0,0.2)" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>',
+    'tactical': '<rect x="118" y="130" width="16" height="20" rx="2" fill="rgba(0,0,0,0.25)" stroke="'+s+'" stroke-width="1"/><rect x="136" y="130" width="12" height="12" rx="2" fill="rgba(0,0,0,0.25)" stroke="'+s+'" stroke-width="1"/><rect x="152" y="130" width="12" height="12" rx="2" fill="rgba(0,0,0,0.25)" stroke="'+s+'" stroke-width="1"/><rect x="166" y="130" width="16" height="20" rx="2" fill="rgba(0,0,0,0.25)" stroke="'+s+'" stroke-width="1"/><rect x="122" y="155" width="56" height="5" rx="2" fill="'+s+'" opacity="0.4"/>',
+    'assault': '<path d="M118 128 L148 125 L148 165 L115 168 Z" fill="rgba(0,0,0,0.15)" stroke="'+s+'" stroke-width="1.5"/><path d="M182 128 L152 125 L152 165 L185 168 Z" fill="rgba(0,0,0,0.15)" stroke="'+s+'" stroke-width="1.5"/><rect x="130" y="132" width="14" height="8" rx="2" fill="'+s+'" opacity="0.5"/><rect x="156" y="132" width="14" height="8" rx="2" fill="'+s+'" opacity="0.5"/><rect x="138" y="145" width="24" height="6" rx="2" fill="rgba(0,0,0,0.2)" stroke="'+s+'" stroke-width="0.8"/>',
+    'recon': '<rect x="130" y="130" width="40" height="5" rx="2" fill="rgba(0,0,0,0.2)" stroke="'+s+'" stroke-width="0.8"/><rect x="135" y="140" width="30" height="4" rx="2" fill="rgba(0,0,0,0.15)" stroke="'+s+'" stroke-width="0.5"/><circle cx="150" cy="155" r="6" fill="rgba(0,0,0,0.2)" stroke="'+s+'" stroke-width="1"/><circle cx="150" cy="155" r="2" fill="'+s+'" opacity="0.6"/>',
+    'hp-halo': '<rect x="118" y="128" width="64" height="8" rx="3" fill="'+s+'" opacity="0.4" stroke="'+s+'" stroke-width="0.5"/><path d="M125 140 L145 138 L145 160 L125 162 Z" fill="rgba(0,0,0,0.2)" stroke="'+s+'" stroke-width="1"/><path d="M175 140 L155 138 L155 160 L175 162 Z" fill="rgba(0,0,0,0.2)" stroke="'+s+'" stroke-width="1"/><rect x="133" y="145" width="8" height="8" rx="1" fill="'+s+'" opacity="0.3"/><rect x="159" y="145" width="8" height="8" rx="1" fill="'+s+'" opacity="0.3"/>',
+    'collar': '<rect x="122" y="135" width="22" height="18" rx="3" fill="rgba(0,0,0,0.2)" stroke="rgba(255,255,255,0.08)" stroke-width="1"/><rect x="156" y="135" width="22" height="18" rx="3" fill="rgba(0,0,0,0.2)" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>'
+  };
+  return d[id] || d['default'];
+}
+
+function getGorgetSVG(id,s) {
+  if (id === 'collar') {
+    return '<path d="M118 105 L182 105 L188 120 L112 120 Z" fill="'+s+'" stroke="#2d2d35" stroke-width="2"/><path d="M120 108 L180 108" stroke="rgba(255,255,255,0.1)" stroke-width="1"/><path d="M122 112 L178 112" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>';
+  }
+  return '<path d="M125 110 L175 110 L180 118 L120 118 Z" fill="'+s+'" stroke="#2d2d35" stroke-width="2"/>';
+}
+
+function getShoulderSVG(id,p,s,side) {
+  var flip = (side==='left') ? '' : ' transform="translate(300, 0) scale(-1, 1)"';
+  var sh = {
+    'default': '<g'+flip+'><path d="M75 110 L118 110 L120 155 L73 155 Z" fill="'+s+'" stroke="#2d2d35" stroke-width="2.5"/><rect x="80" y="118" width="33" height="4" rx="2" fill="rgba(255,255,255,0.1)"/><rect x="82" y="128" width="28" height="3" rx="1.5" fill="rgba(255,255,255,0.06)"/></g>',
+    'security': '<g'+flip+'><path d="M70 108 L120 108 L122 160 L68 160 Z" fill="'+s+'" stroke="#2d2d35" stroke-width="2.5"/><path d="M72 112 L118 112 L119 125 L71 125 Z" fill="'+p+'" stroke="#2d2d35" stroke-width="1"/><rect x="76" y="130" width="40" height="4" rx="2" fill="rgba(255,255,255,0.08)"/><rect x="78" y="138" width="36" height="3" rx="1.5" fill="rgba(255,255,255,0.05)"/><rect x="80" y="146" width="32" height="3" rx="1.5" fill="rgba(255,255,255,0.04)"/></g>',
+    'odst': '<g'+flip+'><path d="M73 108 Q95 100 120 108 L122 158 Q95 162 70 158 Z" fill="'+s+'" stroke="#2d2d35" stroke-width="2.5"/><ellipse cx="96" cy="125" rx="18" ry="8" fill="'+p+'" stroke="#2d2d35" stroke-width="1"/><rect x="82" y="138" width="28" height="3" rx="1.5" fill="rgba(255,255,255,0.08)"/></g>',
+    'mark-v': '<g'+flip+'><path d="M78 110 L118 110 L116 155 L76 155 Z" fill="'+s+'" stroke="#2d2d35" stroke-width="2.5"/><path d="M80 114 L114 114 L113 130 L79 130 Z" fill="'+p+'" stroke="#2d2d35" stroke-width="1"/><rect x="84" y="118" width="24" height="5" rx="2" fill="rgba(255,255,255,0.1)"/><rect x="84" y="136" width="26" height="3" rx="1.5" fill="rgba(255,255,255,0.06)"/></g>',
+    'gungnir': '<g'+flip+'><path d="M68 106 L120 112 L122 158 L66 152 Z" fill="'+s+'" stroke="#2d2d35" stroke-width="2.5"/><path d="M72 112 L116 117 L115 130 L71 126 Z" fill="'+p+'" stroke="#2d2d35" stroke-width="1"/><path d="M74 134 L113 138 L112 142 L73 138 Z" fill="rgba(255,255,255,0.08)"/></g>',
+    'jfo': '<g'+flip+'><path d="M75 108 L118 108 L120 155 L73 155 Z" fill="'+s+'" stroke="#2d2d35" stroke-width="2.5"/><rect x="80" y="112" width="34" height="14" rx="3" fill="'+p+'" stroke="#2d2d35" stroke-width="1"/><rect x="84" y="116" width="10" height="6" rx="2" fill="rgba(0,0,0,0.3)"/><rect x="82" y="132" width="30" height="3" rx="1.5" fill="rgba(255,255,255,0.08)"/><rect x="84" y="140" width="26" height="3" rx="1.5" fill="rgba(255,255,255,0.05)"/></g>'
+  };
+  return sh[id] || sh['default'];
+}
+
+function renderSpartan() {
+  var vc = '#c8a820';
+  for (var i=0;i<VISOR_COLORS.length;i++) { if (VISOR_COLORS[i].id===state.visor) { vc=VISOR_COLORS[i].color; break; } }
+  var p = state.primary;
+  var s = state.secondary;
+  var svg = document.getElementById('spartanSVG');
+  svg.innerHTML =
+    '<defs>'+
+    '<linearGradient id="bodyShade" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="rgba(255,255,255,0.12)"/><stop offset="100%" stop-color="rgba(0,0,0,0.15)"/></linearGradient>'+
+    '<filter id="glow"><feGaussianBlur stdDeviation="2" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'+
+    '<filter id="visorGlow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'+
+    '</defs>'+
+    // Undersuit
+    '<g>'+
+    '<rect x="135" y="95" width="30" height="20" rx="4" fill="#1a1a22" stroke="#0d0d12" stroke-width="1.5"/>'+
+    '<path d="M115 115 L185 115 L190 220 L110 220 Z" fill="#1a1a22" stroke="#0d0d12" stroke-width="1"/>'+
+    '<rect x="88" y="140" width="18" height="60" rx="6" fill="#1a1a22" stroke="#0d0d12" stroke-width="1"/>'+
+    '<rect x="194" y="140" width="18" height="60" rx="6" fill="#1a1a22" stroke="#0d0d12" stroke-width="1"/>'+
+    '<rect x="118" y="215" width="64" height="30" rx="3" fill="#1a1a22" stroke="#0d0d12" stroke-width="1"/>'+
+    '<rect x="122" y="250" width="22" height="40" rx="5" fill="#1a1a22" stroke="#0d0d12" stroke-width="1"/>'+
+    '<rect x="156" y="250" width="22" height="40" rx="5" fill="#1a1a22" stroke="#0d0d12" stroke-width="1"/>'+
+    '<rect x="118" y="325" width="25" height="20" rx="5" fill="#1a1a22" stroke="#0d0d12" stroke-width="1"/>'+
+    '<rect x="157" y="325" width="25" height="20" rx="5" fill="#1a1a22" stroke="#0d0d12" stroke-width="1"/>'+
+    '</g>'+
+    // Legs
+    '<g>'+
+    '<path d="M113 248 L143 248 L146 320 L110 320 Z" fill="'+p+'" stroke="#2d2d35" stroke-width="2.5"/>'+
+    '<path d="M117 260 L139 260 L140 280 L116 280 Z" fill="url(#bodyShade)" opacity="0.5"/>'+
+    '<path d="M157 248 L187 248 L190 320 L154 320 Z" fill="'+p+'" stroke="#2d2d35" stroke-width="2.5"/>'+
+    '<path d="M161 260 L183 260 L184 280 L160 280 Z" fill="url(#bodyShade)" opacity="0.5"/>'+
+    '<path d="M110 325 L146 325 L148 410 L105 410 Z" fill="'+p+'" stroke="#2d2d35" stroke-width="2.5"/>'+
+    '<rect x="114" y="340" width="28" height="6" rx="2" fill="rgba(255,255,255,0.08)"/>'+
+    '<path d="M105 410 L148 410 L150 435 Q150 450 140 450 L108 450 Q100 450 100 435 Z" fill="'+p+'" stroke="#2d2d35" stroke-width="2.5"/>'+
+    '<path d="M154 325 L190 325 L192 410 L152 410 Z" fill="'+p+'" stroke="#2d2d35" stroke-width="2.5"/>'+
+    '<rect x="158" y="340" width="28" height="6" rx="2" fill="rgba(255,255,255,0.08)"/>'+
+    '<path d="M152 410 L192 410 L195 435 Q195 450 185 450 L158 450 Q148 450 148 435 Z" fill="'+p+'" stroke="#2d2d35" stroke-width="2.5"/>'+
+    '<ellipse cx="128" cy="325" rx="14" ry="10" fill="'+s+'" stroke="#2d2d35" stroke-width="2"/>'+
+    '<ellipse cx="172" cy="325" rx="14" ry="10" fill="'+s+'" stroke="#2d2d35" stroke-width="2"/>'+
+    '</g>'+
+    // Arms
+    '<g>'+
+    '<path d="M85 120 L113 120 L115 190 L83 190 Z" fill="'+p+'" stroke="#2d2d35" stroke-width="2.5"/>'+
+    '<path d="M89 130 L109 130 L110 155 L88 155 Z" fill="url(#bodyShade)" opacity="0.4"/>'+
+    '<path d="M187 120 L215 120 L217 190 L185 190 Z" fill="'+p+'" stroke="#2d2d35" stroke-width="2.5"/>'+
+    '<path d="M191 130 L211 130 L212 155 L190 155 Z" fill="url(#bodyShade)" opacity="0.4"/>'+
+    '<path d="M82 195 L116 195 L118 270 L78 270 Z" fill="'+p+'" stroke="#2d2d35" stroke-width="2.5"/>'+
+    '<rect x="86" y="210" width="26" height="5" rx="2" fill="rgba(255,255,255,0.06)"/>'+
+    '<path d="M184 195 L218 195 L222 270 L182 270 Z" fill="'+p+'" stroke="#2d2d35" stroke-width="2.5"/>'+
+    '<rect x="188" y="210" width="26" height="5" rx="2" fill="rgba(255,255,255,0.06)"/>'+
+    '<path d="M80 270 L116 270 L114 295 Q112 305 97 305 Q82 305 78 295 Z" fill="#3d3d48" stroke="#2d2d35" stroke-width="2"/>'+
+    '<path d="M184 270 L220 270 L218 295 Q216 305 203 305 Q188 305 184 295 Z" fill="#3d3d48" stroke="#2d2d35" stroke-width="2"/>'+
+    '</g>'+
+    // Shoulders
+    '<g>'+getShoulderSVG(state.shoulders,p,s,'left')+getShoulderSVG(state.shoulders,p,s,'right')+'</g>'+
+    // Chest
+    '<g>'+
+    '<path d="M108 115 L192 115 L198 170 L195 225 L105 225 L102 170 Z" fill="'+p+'" stroke="#2d2d35" stroke-width="2.5"/>'+
+    '<line x1="150" y1="120" x2="150" y2="220" stroke="#2d2d35" stroke-width="1.5" opacity="0.5"/>'+
+    '<path d="M115 125 L148 120 L148 165 L110 170 Z" fill="url(#bodyShade)" opacity="0.3"/>'+
+    '<path d="M185 125 L152 120 L152 165 L190 170 Z" fill="url(#bodyShade)" opacity="0.3"/>'+
+    '<rect x="125" y="180" width="50" height="8" rx="3" fill="rgba(0,0,0,0.15)" stroke="rgba(255,255,255,0.05)" stroke-width="0.5"/>'+
+    '<rect x="128" y="195" width="44" height="7" rx="3" fill="rgba(0,0,0,0.12)" stroke="rgba(255,255,255,0.04)" stroke-width="0.5"/>'+
+    '<rect x="131" y="208" width="38" height="7" rx="3" fill="rgba(0,0,0,0.1)" stroke="rgba(255,255,255,0.03)" stroke-width="0.5"/>'+
+    getChestDetailSVG(state.chest,p,s)+
+    getGorgetSVG(state.chest,s)+
+    '</g>'+
+    // Belt
+    '<g>'+
+    '<rect x="115" y="222" width="70" height="16" rx="3" fill="#3d3d48" stroke="#2d2d35" stroke-width="2"/>'+
+    '<rect x="140" y="224" width="20" height="12" rx="2" fill="#2a2a32" stroke="#444" stroke-width="1"/>'+
+    '<path d="M125 238 L175 238 L170 260 L130 260 Z" fill="#3d3d48" stroke="#2d2d35" stroke-width="2"/>'+
+    '</g>'+
+    // Helmet
+    '<g>'+getHelmetSVG(state.helmet,p,s,vc)+'</g>';
+}
+
+function buildCards(containerId, items, category) {
+  var grid = document.getElementById(containerId);
+  grid.innerHTML = '';
+  for (var i=0;i<items.length;i++) {
+    (function(item) {
+      var card = document.createElement('div');
+      card.className = 'armor-card' + (state[category] === item.id ? ' active' : '');
+      card.innerHTML = '<div class="card-name">'+item.name+'</div><div class="card-desc">'+item.desc+'</div>';
+      card.onclick = function() {
+        state[category] = item.id;
+        buildCards(containerId, items, category);
+        renderSpartan();
+        updateSummary();
+        pushURL();
+      };
+      grid.appendChild(card);
+    })(items[i]);
+  }
+}
+
+function buildVisorPresets() {
+  var c = document.getElementById('visorPresets');
+  c.innerHTML = '';
+  for (var i=0;i<VISOR_COLORS.length;i++) {
+    (function(v) {
+      var btn = document.createElement('div');
+      btn.className = 'visor-btn' + (state.visor===v.id ? ' active' : '');
+      btn.style.background = v.color;
+      btn.setAttribute('data-name', v.name);
+      btn.onclick = function() {
+        state.visor = v.id;
+        buildVisorPresets();
+        renderSpartan();
+        updateSummary();
+        pushURL();
+      };
+      c.appendChild(btn);
+    })(VISOR_COLORS[i]);
+  }
+}
+
+function buildColorPresets() {
+  var grid = document.getElementById('colorPresetGrid');
+  grid.innerHTML = '';
+  for (var i=0;i<COLOR_PRESETS.length;i++) {
+    (function(cp) {
+      var card = document.createElement('div');
+      var isActive = state.primary===cp.primary && state.secondary===cp.secondary;
+      card.className = 'armor-card' + (isActive ? ' active' : '');
+      card.innerHTML = '<div style="display:flex;gap:3px;justify-content:center;margin-bottom:3px;"><div style="width:14px;height:14px;border-radius:50%;background:'+cp.primary+';border:1px solid rgba(255,255,255,0.1);"></div><div style="width:14px;height:14px;border-radius:50%;background:'+cp.secondary+';border:1px solid rgba(255,255,255,0.1);"></div></div><div class="card-name" style="font-size:0.6rem;">'+cp.name+'</div>';
+      card.onclick = function() {
+        state.primary = cp.primary;
+        state.secondary = cp.secondary;
+        document.getElementById('primaryColor').value = cp.primary;
+        document.getElementById('secondaryColor').value = cp.secondary;
+        buildColorPresets();
+        renderSpartan();
+        updateSummary();
+        pushURL();
+      };
+      grid.appendChild(card);
+    })(COLOR_PRESETS[i]);
+  }
+}
+
+function updateColors() {
+  state.primary = document.getElementById('primaryColor').value;
+  state.secondary = document.getElementById('secondaryColor').value;
+  buildColorPresets();
+  renderSpartan();
+  updateSummary();
+  pushURL();
+}
+
+function updateSummary() {
+  var h,c,s,v;
+  for(var i=0;i<HELMETS.length;i++){if(HELMETS[i].id===state.helmet){h=HELMETS[i];break;}}
+  for(var i=0;i<CHESTS.length;i++){if(CHESTS[i].id===state.chest){c=CHESTS[i];break;}}
+  for(var i=0;i<SHOULDERS.length;i++){if(SHOULDERS[i].id===state.shoulders){s=SHOULDERS[i];break;}}
+  for(var i=0;i<VISOR_COLORS.length;i++){if(VISOR_COLORS[i].id===state.visor){v=VISOR_COLORS[i];break;}}
+  document.getElementById('sumHelmet').textContent = h ? h.name : state.helmet;
+  document.getElementById('sumChest').textContent = c ? c.name : state.chest;
+  document.getElementById('sumShoulders').textContent = s ? s.name : state.shoulders;
+  document.getElementById('sumVisor').textContent = v ? v.name : state.visor;
+  document.getElementById('sumPrimary').innerHTML = '<span style="color:'+state.primary+'">&#9632;</span> '+state.primary.toUpperCase();
+  document.getElementById('sumSecondary').innerHTML = '<span style="color:'+state.secondary+'">&#9632;</span> '+state.secondary.toUpperCase();
+}
+
+function generateName() {
+  var prefix = SPARTAN_PREFIXES[Math.floor(Math.random()*SPARTAN_PREFIXES.length)];
+  var num = spartanNumber();
+  state.name = prefix + '-' + num;
+  document.getElementById('spartanName').textContent = state.name;
+  pushURL();
+}
+
+function randomLoadout() {
+  state.helmet = HELMETS[Math.floor(Math.random()*HELMETS.length)].id;
+  state.chest = CHESTS[Math.floor(Math.random()*CHESTS.length)].id;
+  state.shoulders = SHOULDERS[Math.floor(Math.random()*SHOULDERS.length)].id;
+  state.visor = VISOR_COLORS[Math.floor(Math.random()*VISOR_COLORS.length)].id;
+  var cp = COLOR_PRESETS[Math.floor(Math.random()*COLOR_PRESETS.length)];
+  state.primary = cp.primary;
+  state.secondary = cp.secondary;
+  document.getElementById('primaryColor').value = state.primary;
+  document.getElementById('secondaryColor').value = state.secondary;
+  generateName();
+  rebuildAll();
+  showToast('Random loadout generated!');
+}
+
+function resetLoadout() {
+  state = {helmet:'mark-vi',chest:'default',shoulders:'default',visor:'gold',primary:'#5b8c3e',secondary:'#4a7232',name:'NOBLE-117'};
+  document.getElementById('primaryColor').value = state.primary;
+  document.getElementById('secondaryColor').value = state.secondary;
+  document.getElementById('spartanName').textContent = state.name;
+  rebuildAll();
+  showToast('Loadout reset to default');
+}
+
+function shareLoadout() {
+  var params = new URLSearchParams({h:state.helmet,c:state.chest,s:state.shoulders,v:state.visor,p:state.primary,sc:state.secondary,n:state.name});
+  var url = window.location.origin + window.location.pathname + '?' + params.toString();
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).then(function(){showToast('Link copied to clipboard!');}).catch(function(){fallbackCopy(url);});
+  } else { fallbackCopy(url); }
+}
+
+function fallbackCopy(text) {
+  var ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); showToast('Link copied!'); } catch(e) { showToast('URL updated in address bar'); }
+  document.body.removeChild(ta);
+}
+
+function pushURL() {
+  var params = new URLSearchParams({h:state.helmet,c:state.chest,s:state.shoulders,v:state.visor,p:state.primary,sc:state.secondary,n:state.name});
+  history.replaceState(null,'','?'+params.toString());
+}
+
+function loadFromURL() {
+  var params = new URLSearchParams(window.location.search);
+  if(params.has('h'))state.helmet=params.get('h');
+  if(params.has('c'))state.chest=params.get('c');
+  if(params.has('s'))state.shoulders=params.get('s');
+  if(params.has('v'))state.visor=params.get('v');
+  if(params.has('p'))state.primary=params.get('p');
+  if(params.has('sc'))state.secondary=params.get('sc');
+  if(params.has('n'))state.name=params.get('n');
+  document.getElementById('primaryColor').value=state.primary;
+  document.getElementById('secondaryColor').value=state.secondary;
+  document.getElementById('spartanName').textContent=state.name;
+}
+
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function(){t.classList.remove('show');},2500);
+}
+
+function rebuildAll() {
+  buildCards('helmetGrid',HELMETS,'helmet');
+  buildCards('chestGrid',CHESTS,'chest');
+  buildCards('shoulderGrid',SHOULDERS,'shoulders');
+  buildVisorPresets();
+  buildColorPresets();
+  renderSpartan();
+  updateSummary();
+}
+
+loadFromURL();
+rebuildAll();
+pushURL();
+</script>
+</body>
+</html>
