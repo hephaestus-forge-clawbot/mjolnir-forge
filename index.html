@@ -2,790 +2,1094 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>MJOLNIR FORGE v3 — Spartan Armor Customizer</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MJOLNIR FORGE — Spartan Armor Customizer</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Orbitron:wght@400;700;900&display=swap');
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{background:#0a0a0f;color:#c8d0d8;font-family:'Rajdhani',sans-serif;overflow:hidden;height:100vh;width:100vw}
-  #canvas-container{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0}
-  canvas{display:block;width:100%;height:100%}
-  #top-bar{position:fixed;top:0;left:0;right:0;height:52px;background:linear-gradient(180deg,rgba(10,15,25,0.95),rgba(10,15,25,0.85));border-bottom:1px solid rgba(0,180,255,0.2);display:flex;align-items:center;justify-content:space-between;padding:0 20px;z-index:100;backdrop-filter:blur(10px)}
-  #top-bar h1{font-family:'Orbitron',sans-serif;font-size:16px;font-weight:900;letter-spacing:4px;color:#00b4ff;text-shadow:0 0 20px rgba(0,180,255,0.5)}
-  .top-btn{background:rgba(0,180,255,0.1);border:1px solid rgba(0,180,255,0.3);color:#00b4ff;padding:6px 14px;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:600;cursor:pointer;letter-spacing:1px;transition:all 0.2s;border-radius:3px}
-  .top-btn:hover{background:rgba(0,180,255,0.25);border-color:#00b4ff;box-shadow:0 0 15px rgba(0,180,255,0.3)}
-  .top-actions{display:flex;gap:8px}
-  #panel{position:fixed;top:52px;right:0;width:320px;height:calc(100vh - 52px);background:linear-gradient(180deg,rgba(8,12,20,0.95),rgba(5,8,15,0.98));border-left:1px solid rgba(0,180,255,0.15);overflow-y:auto;z-index:90;backdrop-filter:blur(12px);transition:transform 0.3s ease}
-  #panel.hidden{transform:translateX(100%)}
-  #panel::-webkit-scrollbar{width:4px}
-  #panel::-webkit-scrollbar-track{background:rgba(0,0,0,0.3)}
-  #panel::-webkit-scrollbar-thumb{background:rgba(0,180,255,0.3);border-radius:2px}
-  .section{padding:14px 16px;border-bottom:1px solid rgba(0,180,255,0.08)}
-  .section-title{font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;color:#00b4ff;letter-spacing:2px;margin-bottom:10px;text-transform:uppercase;opacity:0.8}
-  .variant-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
-  .variant-btn{aspect-ratio:1;background:rgba(20,30,45,0.8);border:1px solid rgba(0,180,255,0.15);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-direction:column;transition:all 0.2s;padding:4px;border-radius:3px}
-  .variant-btn:hover{border-color:rgba(0,180,255,0.5);background:rgba(0,180,255,0.1)}
-  .variant-btn.active{border-color:#00b4ff;background:rgba(0,180,255,0.2);box-shadow:0 0 10px rgba(0,180,255,0.2)}
-  .variant-btn .icon{font-size:20px;margin-bottom:2px}
-  .variant-btn .label{font-size:9px;letter-spacing:1px;color:#8899aa;font-weight:600}
-  .color-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
-  .color-row label{font-size:13px;font-weight:600;min-width:75px;color:#8899aa}
-  .color-row input[type="color"]{-webkit-appearance:none;appearance:none;width:40px;height:28px;border:1px solid rgba(0,180,255,0.3);background:transparent;cursor:pointer;border-radius:3px}
-  .color-row input[type="color"]::-webkit-color-swatch-wrapper{padding:2px}
-  .color-row input[type="color"]::-webkit-color-swatch{border:none;border-radius:2px}
-  .visor-presets{display:flex;gap:6px;flex-wrap:wrap}
-  .visor-preset{width:32px;height:32px;border-radius:50%;border:2px solid rgba(255,255,255,0.1);cursor:pointer;transition:all 0.2s;position:relative}
-  .visor-preset:hover{transform:scale(1.15)}
-  .visor-preset.active{border-color:#fff;box-shadow:0 0 12px currentColor}
-  .preset-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
-  .preset-btn{background:rgba(20,30,45,0.8);border:1px solid rgba(0,180,255,0.15);color:#c8d0d8;padding:8px;font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;letter-spacing:0.5px;text-align:center;border-radius:3px}
-  .preset-btn:hover{border-color:#00b4ff;background:rgba(0,180,255,0.15);color:#fff}
-  #panel-toggle{display:none;position:fixed;top:60px;right:10px;z-index:95;background:rgba(0,180,255,0.2);border:1px solid rgba(0,180,255,0.4);color:#00b4ff;width:40px;height:40px;border-radius:50%;cursor:pointer;font-size:18px;align-items:center;justify-content:center}
-  @media(max-width:768px){
-    #panel{width:280px;transform:translateX(100%)}
-    #panel.show{transform:translateX(0)}
-    #panel-toggle{display:flex}
-    #top-bar h1{font-size:12px;letter-spacing:2px}
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&display=swap');
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --cyan: #00e5ff;
+    --cyan-dim: #00b8d4;
+    --cyan-glow: rgba(0, 229, 255, 0.3);
+    --cyan-deep: rgba(0, 229, 255, 0.08);
+    --gold: #ffd54f;
+    --orange: #ff6d00;
+    --panel-bg: rgba(8, 12, 20, 0.82);
+    --panel-border: rgba(0, 229, 255, 0.18);
+    --panel-highlight: rgba(0, 229, 255, 0.06);
+    --text-primary: #e0e6ed;
+    --text-secondary: #8a9bb0;
+    --text-dim: #4a5568;
+    --danger: #ff1744;
+    --success: #00e676;
   }
-  #loading{position:fixed;inset:0;background:#0a0a0f;display:flex;align-items:center;justify-content:center;flex-direction:column;z-index:1000;transition:opacity 0.5s}
-  #loading.done{opacity:0;pointer-events:none}
-  #loading h2{font-family:'Orbitron',sans-serif;color:#00b4ff;font-size:20px;letter-spacing:6px;margin-bottom:20px}
-  .loader-bar{width:200px;height:3px;background:rgba(0,180,255,0.1);border-radius:2px;overflow:hidden}
-  .loader-bar-inner{height:100%;width:0%;background:linear-gradient(90deg,#00b4ff,#00e5ff);animation:load 1.5s ease forwards}
-  @keyframes load{to{width:100%}}
-  #info-overlay{position:fixed;bottom:12px;left:12px;background:rgba(8,12,20,0.9);border:1px solid rgba(0,180,255,0.15);padding:8px 14px;font-size:12px;color:#667788;z-index:90;border-radius:3px;pointer-events:none;transition:opacity 0.3s}
-  #toast{position:fixed;top:60px;left:50%;transform:translateX(-50%);background:rgba(0,180,255,0.2);border:1px solid rgba(0,180,255,0.5);color:#00e5ff;padding:8px 20px;font-size:14px;font-weight:600;border-radius:4px;z-index:200;opacity:0;transition:opacity 0.3s;pointer-events:none;backdrop-filter:blur(8px)}
-  #toast.show{opacity:1}
+
+  html, body {
+    width: 100%; height: 100%;
+    overflow: hidden;
+    background: #000;
+    font-family: 'Rajdhani', sans-serif;
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* === IFRAME (3D VIEWPORT) === */
+  #api-frame {
+    position: fixed; inset: 0;
+    width: 100%; height: 100%;
+    border: none; z-index: 1;
+    background: #050810;
+  }
+
+  /* === LOADING OVERLAY === */
+  #loading-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    background: radial-gradient(ellipse at center, #0a1628 0%, #030608 100%);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    transition: opacity 0.8s ease, visibility 0.8s ease;
+  }
+  #loading-overlay.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+  #loading-overlay .logo-text {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2.8rem; font-weight: 900;
+    letter-spacing: 0.5em; text-indent: 0.5em;
+    background: linear-gradient(135deg, var(--cyan) 0%, #b2ebf2 50%, var(--cyan) 100%);
+    background-size: 200% 200%;
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    animation: shimmer 2.5s ease-in-out infinite;
+    margin-bottom: 2rem;
+  }
+  @keyframes shimmer { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+
+  .loader-bar {
+    width: 280px; height: 3px;
+    background: rgba(0,229,255,0.1);
+    border-radius: 2px; overflow: hidden;
+    position: relative;
+  }
+  .loader-bar::after {
+    content: ''; position: absolute;
+    width: 40%; height: 100%;
+    background: var(--cyan);
+    border-radius: 2px;
+    animation: loadSlide 1.4s ease-in-out infinite;
+    box-shadow: 0 0 12px var(--cyan-glow);
+  }
+  @keyframes loadSlide { 0%{left:-40%} 100%{left:100%} }
+
+  #loading-status {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.85rem; color: var(--text-secondary);
+    margin-top: 1.2rem; letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  /* === HEADER BAR === */
+  #header {
+    position: fixed; top: 0; left: 0; right: 0;
+    z-index: 100; height: 56px;
+    background: linear-gradient(180deg, rgba(5,8,16,0.95) 0%, rgba(5,8,16,0.7) 100%);
+    border-bottom: 1px solid var(--panel-border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 1.2rem;
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  }
+  #header .title-group { display: flex; align-items: center; gap: 0.6rem; }
+  #header .forge-icon {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, var(--cyan), var(--cyan-dim));
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5'/%3E%3C/svg%3E") center/contain no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5'/%3E%3C/svg%3E") center/contain no-repeat;
+  }
+  #header h1 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.15rem; font-weight: 700;
+    letter-spacing: 0.25em;
+    color: var(--cyan);
+    text-shadow: 0 0 20px var(--cyan-glow);
+  }
+  #header .subtitle {
+    font-size: 0.65rem; letter-spacing: 0.3em;
+    color: var(--text-dim); text-transform: uppercase;
+    margin-top: -2px;
+  }
+  .header-actions { display: flex; gap: 0.5rem; align-items: center; }
+
+  /* === TOGGLE BUTTON === */
+  .toggle-btn {
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    color: var(--cyan);
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem;
+    transition: all 0.2s ease;
+  }
+  .toggle-btn:hover {
+    background: var(--cyan-deep);
+    border-color: var(--cyan-dim);
+    box-shadow: 0 0 12px var(--cyan-glow);
+  }
+
+  /* === SIDE PANEL (DESKTOP) === */
+  #control-panel {
+    position: fixed; top: 56px; right: 0;
+    width: 340px; bottom: 0;
+    z-index: 90;
+    background: var(--panel-bg);
+    border-left: 1px solid var(--panel-border);
+    backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+    overflow-y: auto; overflow-x: hidden;
+    padding: 1rem 1rem 6rem 1rem;
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0,229,255,0.15) transparent;
+  }
+  #control-panel.collapsed { transform: translateX(100%); }
+  #control-panel::-webkit-scrollbar { width: 4px; }
+  #control-panel::-webkit-scrollbar-track { background: transparent; }
+  #control-panel::-webkit-scrollbar-thumb { background: rgba(0,229,255,0.15); border-radius: 2px; }
+
+  /* === SECTIONS === */
+  .section {
+    margin-bottom: 1.2rem;
+    background: rgba(0,229,255,0.02);
+    border: 1px solid rgba(0,229,255,0.08);
+    border-radius: 10px;
+    padding: 0.85rem;
+  }
+  .section-header {
+    display: flex; align-items: center; gap: 0.5rem;
+    margin-bottom: 0.7rem;
+  }
+  .section-header .icon { font-size: 0.9rem; opacity: 0.7; }
+  .section-header h3 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.65rem; font-weight: 600;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--text-secondary);
+  }
+
+  /* === CHARACTER SELECTOR === */
+  .char-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+  .char-btn {
+    background: rgba(0,229,255,0.04);
+    border: 1px solid rgba(0,229,255,0.12);
+    border-radius: 8px;
+    padding: 0.6rem 0.4rem;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.25s ease;
+    position: relative; overflow: hidden;
+  }
+  .char-btn::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(135deg, transparent, rgba(0,229,255,0.05));
+    opacity: 0; transition: opacity 0.25s;
+  }
+  .char-btn:hover::before { opacity: 1; }
+  .char-btn:hover {
+    border-color: var(--cyan-dim);
+    box-shadow: 0 0 15px rgba(0,229,255,0.1);
+  }
+  .char-btn.active {
+    border-color: var(--cyan);
+    background: rgba(0,229,255,0.1);
+    box-shadow: 0 0 20px var(--cyan-glow), inset 0 0 20px rgba(0,229,255,0.05);
+  }
+  .char-btn .designation {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.55rem; letter-spacing: 0.15em;
+    color: var(--cyan-dim); display: block;
+    margin-bottom: 0.15rem;
+  }
+  .char-btn .name {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.95rem; font-weight: 600;
+    color: var(--text-primary); display: block;
+  }
+  .char-btn.active .name { color: var(--cyan); }
+  .char-btn.active .designation { color: var(--cyan); }
+
+  /* === COLOR PICKERS === */
+  .color-row {
+    display: flex; align-items: center; gap: 0.6rem;
+    margin-bottom: 0.6rem;
+  }
+  .color-row:last-child { margin-bottom: 0; }
+  .color-row label {
+    font-size: 0.78rem; font-weight: 500;
+    color: var(--text-secondary); min-width: 80px;
+    letter-spacing: 0.05em;
+  }
+  .color-input-wrap {
+    position: relative; flex: 1;
+    display: flex; align-items: center; gap: 0.4rem;
+  }
+  input[type="color"] {
+    -webkit-appearance: none; appearance: none;
+    width: 36px; height: 36px;
+    border: 2px solid rgba(0,229,255,0.2);
+    border-radius: 8px;
+    cursor: pointer; background: transparent; padding: 2px;
+  }
+  input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+  input[type="color"]::-webkit-color-swatch { border: none; border-radius: 5px; }
+  input[type="color"]:hover { border-color: var(--cyan); }
+  .hex-display {
+    font-family: 'Rajdhani', monospace;
+    font-size: 0.75rem; color: var(--text-dim);
+    letter-spacing: 0.05em;
+  }
+
+  /* === VISOR PRESETS === */
+  .visor-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem; }
+  .visor-btn {
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px; padding: 0.45rem 0.3rem;
+    cursor: pointer; text-align: center;
+    font-size: 0.72rem; font-weight: 600;
+    letter-spacing: 0.05em;
+    transition: all 0.2s ease;
+    position: relative; overflow: hidden;
+    color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+  }
+  .visor-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  }
+  .visor-btn.active {
+    border-color: #fff;
+    box-shadow: 0 0 15px rgba(255,255,255,0.3);
+  }
+  .visor-btn .visor-dot {
+    width: 16px; height: 16px;
+    border-radius: 50%; margin: 0 auto 0.25rem;
+    border: 1px solid rgba(255,255,255,0.3);
+    box-shadow: 0 0 8px currentColor;
+  }
+
+  /* === PRESET THEMES === */
+  .preset-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.4rem; }
+  .preset-btn {
+    background: rgba(0,229,255,0.03);
+    border: 1px solid rgba(0,229,255,0.1);
+    border-radius: 8px; padding: 0.5rem;
+    cursor: pointer;
+    display: flex; align-items: center; gap: 0.5rem;
+    transition: all 0.2s ease;
+  }
+  .preset-btn:hover {
+    border-color: var(--cyan-dim);
+    background: rgba(0,229,255,0.06);
+  }
+  .preset-btn.active {
+    border-color: var(--cyan);
+    background: rgba(0,229,255,0.08);
+  }
+  .preset-colors { display: flex; gap: 2px; }
+  .preset-swatch {
+    width: 12px; height: 18px;
+    border-radius: 3px;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .preset-btn .preset-name {
+    font-size: 0.72rem; font-weight: 600;
+    color: var(--text-primary); letter-spacing: 0.03em;
+  }
+
+  /* === ACTION BUTTONS === */
+  .action-row { display: flex; gap: 0.4rem; }
+  .action-btn {
+    flex: 1;
+    background: rgba(0,229,255,0.06);
+    border: 1px solid rgba(0,229,255,0.15);
+    border-radius: 8px; padding: 0.55rem;
+    cursor: pointer;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.78rem; font-weight: 600;
+    color: var(--cyan); letter-spacing: 0.08em;
+    transition: all 0.2s ease; text-transform: uppercase;
+  }
+  .action-btn:hover {
+    background: rgba(0,229,255,0.12);
+    border-color: var(--cyan);
+    box-shadow: 0 0 15px var(--cyan-glow);
+  }
+  .action-btn.danger {
+    color: var(--danger);
+    border-color: rgba(255,23,68,0.2);
+    background: rgba(255,23,68,0.04);
+  }
+  .action-btn.danger:hover {
+    background: rgba(255,23,68,0.1);
+    border-color: var(--danger);
+    box-shadow: 0 0 15px rgba(255,23,68,0.2);
+  }
+
+  /* === ATTRIBUTION === */
+  #attribution {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    z-index: 95;
+    background: linear-gradient(0deg, rgba(5,8,16,0.9) 0%, transparent 100%);
+    padding: 2rem 1rem 0.6rem; text-align: center;
+    pointer-events: none;
+  }
+  #attribution a {
+    pointer-events: all;
+    color: var(--text-dim); text-decoration: none;
+    font-size: 0.65rem; letter-spacing: 0.1em;
+    transition: color 0.2s;
+  }
+  #attribution a:hover { color: var(--cyan-dim); }
+
+  /* === STATUS INDICATOR === */
+  #status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%; background: var(--text-dim);
+    transition: background 0.3s; flex-shrink: 0;
+  }
+  #status-dot.connected { background: var(--success); box-shadow: 0 0 8px rgba(0,230,118,0.4); }
+  #status-dot.error { background: var(--danger); box-shadow: 0 0 8px rgba(255,23,68,0.4); }
+
+  /* === MATERIAL LOG (debug) === */
+  #material-log {
+    font-family: monospace; font-size: 0.6rem;
+    color: var(--text-dim);
+    max-height: 100px; overflow-y: auto;
+    white-space: pre-wrap; word-break: break-all;
+    background: rgba(0,0,0,0.3); border-radius: 6px;
+    padding: 0.5rem; display: none;
+  }
+  #material-log.visible { display: block; }
+
+  /* === MOBILE RESPONSIVE === */
+  @media (max-width: 768px) {
+    #control-panel {
+      top: auto; bottom: 0; left: 0; right: 0;
+      width: 100%; height: 55vh;
+      border-left: none;
+      border-top: 1px solid var(--panel-border);
+      border-radius: 16px 16px 0 0;
+      padding: 0.8rem 0.8rem 5rem 0.8rem;
+    }
+    #control-panel.collapsed { transform: translateY(100%); }
+    #header h1 { font-size: 0.95rem; letter-spacing: 0.15em; }
+    #header .subtitle { display: none; }
+    .char-grid { grid-template-columns: repeat(4, 1fr); }
+    #control-panel::before {
+      content: ''; display: block;
+      width: 40px; height: 4px;
+      background: rgba(0,229,255,0.3);
+      border-radius: 2px; margin: 0 auto 0.8rem;
+    }
+  }
+  @media (max-width: 400px) {
+    .char-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  /* === SCANLINE EFFECT === */
+  #scanlines {
+    position: fixed; inset: 0; z-index: 99;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      0deg, transparent, transparent 2px,
+      rgba(0,0,0,0.015) 2px, rgba(0,0,0,0.015) 4px
+    );
+    opacity: 0.5;
+  }
+
+  @keyframes borderPulse {
+    0%, 100% { border-color: var(--cyan); }
+    50% { border-color: rgba(0,229,255,0.5); }
+  }
+  .char-btn.active { animation: borderPulse 2s ease-in-out infinite; }
 </style>
 </head>
 <body>
 
-<div id="loading">
-  <h2>MJOLNIR FORGE</h2>
-  <div class="loader-bar"><div class="loader-bar-inner"></div></div>
+<!-- Loading Overlay -->
+<div id="loading-overlay">
+  <div class="logo-text">MJOLNIR FORGE</div>
+  <div class="loader-bar"></div>
+  <div id="loading-status">INITIALIZING VIEWER...</div>
 </div>
 
-<div id="canvas-container"></div>
+<!-- Scanline overlay -->
+<div id="scanlines"></div>
 
-<div id="top-bar">
-  <h1>MJOLNIR FORGE v3</h1>
-  <div class="top-actions">
-    <button class="top-btn" id="btn-random">&#9889; RANDOM</button>
-    <button class="top-btn" id="btn-share">&#128279; SHARE</button>
-    <button class="top-btn" id="btn-export">&#128248; EXPORT</button>
+<!-- 3D Viewport -->
+<iframe
+  id="api-frame"
+  src="https://sketchfab.com/models/c727e95065fc40b999cdfdc6ca4dc394/embed?autostart=1&ui_infos=0&ui_controls=0&ui_watermark=0&ui_stop=0&ui_help=0&ui_settings=0&ui_inspector=0&ui_annotations=0&ui_fullscreen=0&ui_hint=0&ui_loading=0"
+  allow="autoplay; fullscreen; xr-spatial-tracking"
+  allowfullscreen>
+</iframe>
+
+<!-- Header -->
+<div id="header">
+  <div class="title-group">
+    <div class="forge-icon"></div>
+    <div>
+      <h1>MJOLNIR FORGE</h1>
+      <div class="subtitle">GEN-2 ARMOR CUSTOMIZATION SYSTEM</div>
+    </div>
+  </div>
+  <div class="header-actions">
+    <div id="status-dot" title="Viewer status"></div>
+    <button class="toggle-btn" id="toggle-panel" title="Toggle controls">&#9881;</button>
   </div>
 </div>
 
-<div id="panel">
+<!-- Control Panel -->
+<div id="control-panel">
+
+  <!-- Character Selector -->
   <div class="section">
-    <div class="section-title">Helmet</div>
-    <div class="variant-grid" id="helmet-grid"></div>
+    <div class="section-header">
+      <span class="icon">&#128100;</span>
+      <h3>Spartan Select</h3>
+    </div>
+    <div class="char-grid" id="char-grid">
+      <button class="char-btn active" data-spartan="masterchief">
+        <span class="designation">SIERRA-117</span>
+        <span class="name">Master Chief</span>
+      </button>
+      <button class="char-btn" data-spartan="fred">
+        <span class="designation">SIERRA-104</span>
+        <span class="name">Fred</span>
+      </button>
+      <button class="char-btn" data-spartan="kelly">
+        <span class="designation">SIERRA-087</span>
+        <span class="name">Kelly</span>
+      </button>
+      <button class="char-btn" data-spartan="linda">
+        <span class="designation">SIERRA-058</span>
+        <span class="name">Linda</span>
+      </button>
+    </div>
   </div>
+
+  <!-- Armor Colors -->
   <div class="section">
-    <div class="section-title">Chest</div>
-    <div class="variant-grid" id="chest-grid"></div>
-  </div>
-  <div class="section">
-    <div class="section-title">Shoulders</div>
-    <div class="variant-grid" id="shoulder-grid"></div>
-  </div>
-  <div class="section">
-    <div class="section-title">Colors</div>
+    <div class="section-header">
+      <span class="icon">&#127912;</span>
+      <h3>Armor Colors</h3>
+    </div>
     <div class="color-row">
       <label>Primary</label>
-      <input type="color" id="primary-color" value="#4a7a2e">
+      <div class="color-input-wrap">
+        <input type="color" id="color-primary" value="#4a7c2e">
+        <span class="hex-display" id="hex-primary">#4A7C2E</span>
+      </div>
     </div>
     <div class="color-row">
       <label>Secondary</label>
-      <input type="color" id="secondary-color" value="#3a5a8a">
+      <div class="color-input-wrap">
+        <input type="color" id="color-secondary" value="#2e4a1e">
+        <span class="hex-display" id="hex-secondary">#2E4A1E</span>
+      </div>
     </div>
   </div>
+
+  <!-- Visor Color -->
   <div class="section">
-    <div class="section-title">Visor</div>
-    <div class="visor-presets" id="visor-presets"></div>
+    <div class="section-header">
+      <span class="icon">&#128302;</span>
+      <h3>Visor</h3>
+    </div>
+    <div class="visor-grid" id="visor-grid">
+      <button class="visor-btn active" data-color="#ffd54f" data-name="Gold" style="background:linear-gradient(135deg,#b8860b,#ffd54f)">
+        <div class="visor-dot" style="background:#ffd54f;color:#ffd54f"></div>
+        Gold
+      </button>
+      <button class="visor-btn" data-color="#42a5f5" data-name="Blue" style="background:linear-gradient(135deg,#1565c0,#42a5f5)">
+        <div class="visor-dot" style="background:#42a5f5;color:#42a5f5"></div>
+        Blue
+      </button>
+      <button class="visor-btn" data-color="#bdbdbd" data-name="Silver" style="background:linear-gradient(135deg,#616161,#bdbdbd)">
+        <div class="visor-dot" style="background:#bdbdbd;color:#bdbdbd"></div>
+        Silver
+      </button>
+      <button class="visor-btn" data-color="#ef5350" data-name="Red" style="background:linear-gradient(135deg,#b71c1c,#ef5350)">
+        <div class="visor-dot" style="background:#ef5350;color:#ef5350"></div>
+        Red
+      </button>
+      <button class="visor-btn" data-color="#66bb6a" data-name="Green" style="background:linear-gradient(135deg,#2e7d32,#66bb6a)">
+        <div class="visor-dot" style="background:#66bb6a;color:#66bb6a"></div>
+        Green
+      </button>
+      <button class="visor-btn" data-color="#ab47bc" data-name="Purple" style="background:linear-gradient(135deg,#6a1b9a,#ab47bc)">
+        <div class="visor-dot" style="background:#ab47bc;color:#ab47bc"></div>
+        Purple
+      </button>
+    </div>
   </div>
+
+  <!-- Preset Themes -->
   <div class="section">
-    <div class="section-title">Presets</div>
+    <div class="section-header">
+      <span class="icon">&#9876;</span>
+      <h3>Noble Team Presets</h3>
+    </div>
     <div class="preset-grid" id="preset-grid"></div>
   </div>
+
+  <!-- Actions -->
+  <div class="section">
+    <div class="section-header">
+      <span class="icon">&#9889;</span>
+      <h3>Actions</h3>
+    </div>
+    <div class="action-row">
+      <button class="action-btn" id="btn-random">&#127922; Random</button>
+      <button class="action-btn danger" id="btn-reset">&#8634; Reset</button>
+    </div>
+  </div>
+
+  <!-- Debug: Material Log -->
+  <div class="section">
+    <div class="section-header" style="cursor:pointer" id="debug-toggle">
+      <span class="icon">&#128295;</span>
+      <h3>Material Debug</h3>
+    </div>
+    <div id="material-log"></div>
+  </div>
+
 </div>
 
-<button id="panel-toggle">&#9881;</button>
-<div id="info-overlay">Drag to rotate &middot; Scroll to zoom &middot; Pinch on mobile</div>
-<div id="toast"></div>
+<!-- Attribution -->
+<div id="attribution">
+  <a href="https://sketchfab.com/3d-models/charactershalo-5spartansblue-team-c727e95065fc40b999cdfdc6ca4dc394" target="_blank" rel="noopener">
+    3D Model by jameslucino117 &mdash; CC BY 4.0
+  </a>
+</div>
 
-<script type="importmap">
-{
-  "imports": {
-    "three": "https://cdn.jsdelivr.net/npm/three@0.162.0/build/three.module.js",
-    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.162.0/examples/jsm/"
+<!-- Sketchfab Viewer API -->
+<script src="https://static.sketchfab.com/api/sketchfab-viewer-1.12.1.js"></script>
+
+<script>
+(function() {
+  'use strict';
+
+  // ========== STATE ==========
+  var state = {
+    api: null,
+    materials: [],
+    nodeMap: null,
+    activeSpartan: 'masterchief',
+    primaryColor: '#4a7c2e',
+    secondaryColor: '#2e4a1e',
+    visorColor: '#ffd54f',
+    panelOpen: true,
+    materialMap: {},
+    nodeGroups: {},
+    defaultMaterials: {},
+  };
+
+  // ========== NOBLE TEAM PRESETS ==========
+  var PRESETS = [
+    { name: 'Noble Six',  primary: '#5c6370', secondary: '#3b3f47', visor: '#ffd54f' },
+    { name: 'Emile',      primary: '#2d2d2d', secondary: '#1a1a1a', visor: '#ef5350' },
+    { name: 'Jorge',      primary: '#4e342e', secondary: '#3e2723', visor: '#ffd54f' },
+    { name: 'Kat',        primary: '#37474f', secondary: '#546e7a', visor: '#42a5f5' },
+    { name: 'Carter',     primary: '#455a64', secondary: '#37474f', visor: '#ffd54f' },
+    { name: 'Jun',        primary: '#2e7d32', secondary: '#1b5e20', visor: '#66bb6a' },
+  ];
+
+  // ========== SPARTAN CONFIG ==========
+  var SPARTAN_KEYS = {
+    masterchief: ['masterchief', 'master_chief', 'chief', 'mc_', 'master'],
+    fred:        ['fred', 'centurion'],
+    kelly:       ['kelly', 'hermes'],
+    linda:       ['linda'],
+  };
+
+  var CLASSIFY = {
+    visor:     ['visor', 'vizor', 'glass_visor'],
+    undersuit: ['techsuit', 'undersuit', 'bodysuit', 'inner', 'cloth', 'body_suit'],
+    secondary: ['detail', 'secondary', 'accent', 'trim'],
+  };
+
+  // ========== HELPERS ==========
+  function hexToRGB01(hex) {
+    hex = hex.replace('#', '');
+    return [
+      parseInt(hex.substring(0,2), 16) / 255,
+      parseInt(hex.substring(2,4), 16) / 255,
+      parseInt(hex.substring(4,6), 16) / 255,
+    ];
   }
-}
-</script>
 
-<script type="module">
-import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
-
-/* ===== STATE ===== */
-const S = {
-  helmet:'markvi', chest:'default', shoulder:'default',
-  primaryColor:'#4a7a2e', secondaryColor:'#3a5a8a',
-  visorColor:'#ffaa00'
-};
-
-const HELMETS = [
-  {id:'markv',name:'MARK V',icon:'\u2164'},
-  {id:'markvi',name:'MARK VI',icon:'\u2165'},
-  {id:'eva',name:'EVA',icon:'\u25CE'},
-  {id:'cqb',name:'CQB',icon:'\u25C6'},
-  {id:'scout',name:'SCOUT',icon:'\u25B7'},
-  {id:'recon',name:'RECON',icon:'\u25BD'},
-  {id:'odst',name:'ODST',icon:'\u25A3'},
-  {id:'hayabusa',name:'HAYABU',icon:'\u2694'}
-];
-const CHESTS = [
-  {id:'default',name:'DEFAULT',icon:'\u25FB'},
-  {id:'tactical',name:'TACTIC',icon:'\u271A'},
-  {id:'assault',name:'ASSLT',icon:'\u25B2'},
-  {id:'recon',name:'RECON',icon:'\u25C7'},
-  {id:'grenadier',name:'GRENAD',icon:'\u25CF'}
-];
-const SHOULDERS = [
-  {id:'default',name:'DEFAULT',icon:'\u25D6'},
-  {id:'security',name:'SECUR',icon:'\u25D7'},
-  {id:'odst',name:'ODST',icon:'\u25AA'},
-  {id:'gungnir',name:'GUNGN',icon:'\u25AE'},
-  {id:'markv',name:'MK V',icon:'\u25D0'}
-];
-const VISOR_COLORS = [
-  {c:'#ffaa00',n:'Gold'},{c:'#00ccff',n:'Blue'},{c:'#ff4422',n:'Red'},{c:'#44ff44',n:'Green'},
-  {c:'#ff66ff',n:'Pink'},{c:'#ffffff',n:'Silver'},{c:'#ff8800',n:'Orange'},{c:'#8844ff',n:'Purple'}
-];
-const PRESETS = [
-  {name:'Master Chief',h:'markvi',c:'default',s:'default',p:'#4a7a2e',q:'#4a7a2e',v:'#ffaa00'},
-  {name:'Noble Six',h:'markv',c:'tactical',s:'security',p:'#555566',q:'#444455',v:'#00ccff'},
-  {name:'Emile-A239',h:'eva',c:'assault',s:'gungnir',p:'#555555',q:'#444444',v:'#00ccff'},
-  {name:'Carter-A259',h:'recon',c:'tactical',s:'security',p:'#445577',q:'#334466',v:'#ffaa00'},
-  {name:'Jorge-052',h:'cqb',c:'grenadier',s:'gungnir',p:'#556644',q:'#445533',v:'#ffaa00'},
-  {name:'Jun-A266',h:'scout',c:'recon',s:'odst',p:'#667766',q:'#556655',v:'#00ccff'},
-  {name:'ODST Buck',h:'odst',c:'tactical',s:'odst',p:'#333340',q:'#222230',v:'#00ccff'},
-  {name:'Hayabusa',h:'hayabusa',c:'assault',s:'markv',p:'#cccccc',q:'#888888',v:'#ff4422'}
-];
-
-/* ===== RENDERER ===== */
-const container = document.getElementById('canvas-container');
-const renderer = new THREE.WebGLRenderer({antialias:true, preserveDrawingBuffer:true});
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.3;
-renderer.outputColorSpace = THREE.SRGBColorSpace;
-container.appendChild(renderer.domElement);
-
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x080c14);
-
-const camera = new THREE.PerspectiveCamera(38, window.innerWidth/window.innerHeight, 0.1, 100);
-camera.position.set(0, 1.5, 4.5);
-
-const controls = new OrbitControls(camera, renderer.domElement);
-controls.target.set(0, 0.9, 0);
-controls.enableDamping = true;
-controls.dampingFactor = 0.08;
-controls.minDistance = 2;
-controls.maxDistance = 8;
-controls.maxPolarAngle = Math.PI * 0.85;
-controls.update();
-
-/* ===== POST PROCESSING ===== */
-const composer = new EffectComposer(renderer);
-composer.addPass(new RenderPass(scene, camera));
-const bloom = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.5, 0.4, 0.75);
-composer.addPass(bloom);
-
-/* ===== ENVIRONMENT MAP ===== */
-function makeEnvMap(){
-  const pmrem = new THREE.PMREMGenerator(renderer);
-  const es = new THREE.Scene();
-  es.add(new THREE.Mesh(new THREE.SphereGeometry(10,32,16), new THREE.MeshBasicMaterial({color:0x111122,side:THREE.BackSide})));
-  const pg = new THREE.PlaneGeometry(4,4);
-  const p1 = new THREE.Mesh(pg, new THREE.MeshBasicMaterial({color:0x5599dd}));
-  p1.position.set(3,3,3); p1.lookAt(0,0,0); es.add(p1);
-  const p2 = new THREE.Mesh(pg.clone(), new THREE.MeshBasicMaterial({color:0x223355}));
-  p2.position.set(-3,2,-2); p2.lookAt(0,0,0); es.add(p2);
-  const p3 = new THREE.Mesh(pg.clone(), new THREE.MeshBasicMaterial({color:0x6699ff}));
-  p3.position.set(0,4,-4); p3.lookAt(0,0,0); es.add(p3);
-  const p4 = new THREE.Mesh(pg.clone(), new THREE.MeshBasicMaterial({color:0x88aaff}));
-  p4.position.set(-2,1,4); p4.lookAt(0,0,0); es.add(p4);
-  const e = pmrem.fromScene(es, 0.04).texture;
-  pmrem.dispose();
-  return e;
-}
-const envMap = makeEnvMap();
-scene.environment = envMap;
-
-/* ===== LIGHTING ===== */
-scene.add(new THREE.AmbientLight(0x1a2040, 0.5));
-const kl = new THREE.DirectionalLight(0xffeedd, 2.0);
-kl.position.set(3,5,4); scene.add(kl);
-const fl = new THREE.DirectionalLight(0x4466aa, 0.7);
-fl.position.set(-4,3,2); scene.add(fl);
-const rl = new THREE.DirectionalLight(0x0066ff, 1.2);
-rl.position.set(0,2,-5); scene.add(rl);
-const bl = new THREE.DirectionalLight(0x112244, 0.3);
-bl.position.set(0,-3,2); scene.add(bl);
-
-/* ===== GROUND ===== */
-const gnd = new THREE.Mesh(
-  new THREE.CircleGeometry(3,64),
-  new THREE.MeshStandardMaterial({color:0x080c14,metalness:0.8,roughness:0.3,envMap})
-);
-gnd.rotation.x = -Math.PI/2; gnd.position.y = -0.01; scene.add(gnd);
-const rng = new THREE.Mesh(
-  new THREE.RingGeometry(1.3,1.35,64),
-  new THREE.MeshBasicMaterial({color:0x00b4ff,transparent:true,opacity:0.15,side:THREE.DoubleSide})
-);
-rng.rotation.x = -Math.PI/2; rng.position.y = 0.005; scene.add(rng);
-
-/* ===== MATERIALS ===== */
-let primaryMat, secondaryMat, visorMat, undersuitMat;
-
-function makeMats(){
-  [primaryMat,secondaryMat,visorMat,undersuitMat].forEach(m=>{if(m)m.dispose()});
-  primaryMat = new THREE.MeshPhysicalMaterial({
-    color:new THREE.Color(S.primaryColor),metalness:0.85,roughness:0.25,
-    envMap,envMapIntensity:1.0,clearcoat:0.15,clearcoatRoughness:0.3
-  });
-  secondaryMat = new THREE.MeshPhysicalMaterial({
-    color:new THREE.Color(S.secondaryColor),metalness:0.8,roughness:0.3,
-    envMap,envMapIntensity:0.9,clearcoat:0.1,clearcoatRoughness:0.4
-  });
-  visorMat = new THREE.MeshPhysicalMaterial({
-    color:new THREE.Color(S.visorColor),metalness:0.9,roughness:0.1,
-    envMap,envMapIntensity:0.8,
-    emissive:new THREE.Color(S.visorColor),emissiveIntensity:0.5,
-    clearcoat:1.0,clearcoatRoughness:0.05,transparent:true,opacity:0.92,ior:2.0
-  });
-  undersuitMat = new THREE.MeshPhysicalMaterial({
-    color:0x111118,metalness:0.3,roughness:0.7,envMap,envMapIntensity:0.3
-  });
-}
-makeMats();
-
-/* ===== GEOMETRY HELPERS ===== */
-function latheProfile(pts, segs=32, phiS=0, phiL=Math.PI*2){
-  const g = new THREE.LatheGeometry(pts.map(p=>new THREE.Vector2(p[0],p[1])), segs, phiS, phiL);
-  g.computeVertexNormals(); return g;
-}
-
-function curvedPanel(w,h,depth,curve,sw=16,sh=16){
-  const g = new THREE.PlaneGeometry(w,h,sw,sh);
-  const pos = g.attributes.position;
-  for(let i=0;i<pos.count;i++){
-    const x=pos.getX(i), y=pos.getY(i);
-    const tx=x/(w/2), ty=y/(h/2);
-    pos.setZ(i, depth + curve*(1-tx*tx)*(1-ty*ty*0.3));
+  function randomHex() {
+    return '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
   }
-  pos.needsUpdate=true; g.computeVertexNormals(); return g;
-}
 
-function roundBox(w,h,d,r,bs=3){
-  const shape = new THREE.Shape();
-  const hw=w/2-r, hh=h/2-r;
-  shape.moveTo(-hw,-h/2);
-  shape.lineTo(hw,-h/2);
-  shape.quadraticCurveTo(w/2,-h/2,w/2,-hh);
-  shape.lineTo(w/2,hh);
-  shape.quadraticCurveTo(w/2,h/2,hw,h/2);
-  shape.lineTo(-hw,h/2);
-  shape.quadraticCurveTo(-w/2,h/2,-w/2,hh);
-  shape.lineTo(-w/2,-hh);
-  shape.quadraticCurveTo(-w/2,-h/2,-hw,-h/2);
-  const g = new THREE.ExtrudeGeometry(shape, {depth:d,bevelEnabled:true,bevelThickness:r*0.8,bevelSize:r*0.8,bevelSegments:bs});
-  g.translate(0,0,-d/2); g.computeVertexNormals(); return g;
-}
-
-function deform(g, fn){
-  const p=g.attributes.position;
-  const v=new THREE.Vector3();
-  for(let i=0;i<p.count;i++){
-    v.set(p.getX(i),p.getY(i),p.getZ(i));
-    fn(v,i);
-    p.setXYZ(i,v.x,v.y,v.z);
+  function log(msg) {
+    var el = document.getElementById('material-log');
+    el.textContent += msg + '\n';
+    el.scrollTop = el.scrollHeight;
+    console.log('[MJOLNIR]', msg);
   }
-  p.needsUpdate=true; g.computeVertexNormals();
-}
 
-function visorBand(w,h,d,cx=0.03,cy=0.01,sw=24,sh=12){
-  const g=new THREE.PlaneGeometry(w,h,sw,sh);
-  const p=g.attributes.position;
-  for(let i=0;i<p.count;i++){
-    const x=p.getX(i),y=p.getY(i);
-    const tx=x/(w/2),ty=y/(h/2);
-    p.setZ(i, d + cx*(1-tx*tx) + cy*(1-ty*ty));
+  function setLoadingStatus(text) {
+    var el = document.getElementById('loading-status');
+    if (el) el.textContent = text;
   }
-  p.needsUpdate=true; g.computeVertexNormals(); return g;
-}
 
-function addM(group, geo, mat, tag){
-  const m = new THREE.Mesh(geo, mat);
-  m.userData.mt = tag;
-  group.add(m);
-  return m;
-}
+  // ========== MATERIAL MAPPING ==========
+  function classifyMaterials(materials) {
+    log('=== MATERIAL DISCOVERY ===');
+    log('Found ' + materials.length + ' materials total\n');
 
-/* ===== SPARTAN GROUP ===== */
-const spartan = new THREE.Group();
-scene.add(spartan);
-
-const B = {
-  headY:1.78, neckY:1.65, shoulderY:1.52, shoulderW:0.48,
-  chestY:1.35, waistY:1.05, hipY:0.95, hipW:0.22,
-  kneeY:0.52, ankleY:0.12, footY:0.0
-};
-
-let helmetGrp, chestGrp, shoulderLGrp, shoulderRGrp, bodyGrp;
-
-function disposeGrp(g){ g.traverse(c=>{if(c.geometry)c.geometry.dispose()}); }
-
-/* ===== BODY ===== */
-function buildBody(){
-  bodyGrp = new THREE.Group();
-
-  // Neck
-  const ng = new THREE.CylinderGeometry(0.07,0.09,0.14,16);
-  ng.translate(0,B.neckY,0);
-  addM(bodyGrp, ng, undersuitMat, 'u');
-
-  // Torso
-  const tp = [[0,B.shoulderY+0.02],[0.16,B.shoulderY],[0.18,B.chestY+0.1],[0.19,B.chestY],
-    [0.17,B.waistY+0.1],[0.14,B.waistY],[0.16,B.hipY+0.05],[0.18,B.hipY],[0.17,B.hipY-0.05],[0.001,B.hipY-0.1]];
-  addM(bodyGrp, latheProfile(tp,24), undersuitMat, 'u');
-
-  [-1,1].forEach(side=>{
-    // Upper arm undersuit
-    const ag = new THREE.CapsuleGeometry(0.055,0.22,8,12);
-    ag.translate(side*B.shoulderW, B.shoulderY-0.18, 0);
-    addM(bodyGrp, ag, undersuitMat, 'u');
-
-    // Forearm armor
-    const fg = new THREE.CapsuleGeometry(0.05,0.22,8,12);
-    fg.translate(side*(B.shoulderW+0.02), B.shoulderY-0.5, 0.04);
-    addM(bodyGrp, fg, primaryMat, 'p');
-
-    // Forearm plate
-    const fpg = curvedPanel(0.08,0.18,0.015,0.02,8,8);
-    fpg.rotateY(side>0?0.4:-0.4);
-    fpg.translate(side*(B.shoulderW+0.02+0.04), B.shoulderY-0.5, 0.04);
-    addM(bodyGrp, fpg, secondaryMat, 's');
-
-    // Hand
-    const hg = new THREE.SphereGeometry(0.045,12,8);
-    hg.scale(1,1.2,0.9);
-    hg.translate(side*(B.shoulderW+0.02), B.shoulderY-0.68, 0.04);
-    addM(bodyGrp, hg, primaryMat, 'p');
-
-    // Thigh
-    const thp = [[0.001,B.hipY-0.02],[0.08,B.hipY-0.05],[0.09,B.hipY-0.1],[0.095,(B.hipY+B.kneeY)/2],
-      [0.085,B.kneeY+0.05],[0.07,B.kneeY],[0.001,B.kneeY-0.02]];
-    const tg = latheProfile(thp,16);
-    tg.translate(side*B.hipW,0,0);
-    addM(bodyGrp, tg, primaryMat, 'p');
-
-    // Thigh plate
-    const tpg = curvedPanel(0.1,0.22,0.01,0.03,8,8);
-    tpg.rotateY(side>0?0.3:-0.3);
-    tpg.translate(side*(B.hipW+0.06), (B.hipY+B.kneeY)/2+0.02, 0.04);
-    addM(bodyGrp, tpg, secondaryMat, 's');
-
-    // Knee
-    const kg = new THREE.SphereGeometry(0.065,12,8);
-    kg.scale(0.9,1.1,0.85);
-    kg.translate(side*B.hipW, B.kneeY, 0.01);
-    addM(bodyGrp, kg, undersuitMat, 'u');
-
-    // Knee plate
-    const kpg = curvedPanel(0.07,0.08,0.01,0.025,6,6);
-    kpg.translate(side*B.hipW, B.kneeY, 0.06);
-    addM(bodyGrp, kpg, primaryMat, 'p');
-
-    // Shin
-    const shp = [[0.001,B.kneeY-0.04],[0.065,B.kneeY-0.08],[0.07,(B.kneeY+B.ankleY)/2+0.05],
-      [0.065,(B.kneeY+B.ankleY)/2],[0.06,B.ankleY+0.08],[0.055,B.ankleY],[0.001,B.ankleY-0.01]];
-    const sg = latheProfile(shp,14);
-    sg.translate(side*B.hipW,0,0);
-    addM(bodyGrp, sg, primaryMat, 'p');
-
-    // Shin plate
-    const spg = curvedPanel(0.07,0.25,0.01,0.02,6,10);
-    spg.translate(side*B.hipW, (B.kneeY+B.ankleY)/2+0.02, 0.065);
-    addM(bodyGrp, spg, secondaryMat, 's');
-
-    // Boot
-    const bg = new THREE.BoxGeometry(0.1,0.12,0.16,4,3,4);
-    bg.translate(side*B.hipW, 0.06, 0.02);
-    deform(bg, v=>{
-      if(v.z>0.05){v.y-=0.015;v.x*=0.85}
-      if(v.z<-0.05){v.y+=0.01}
-    });
-    addM(bodyGrp, bg, primaryMat, 'p');
-  });
-
-  spartan.add(bodyGrp);
-}
-
-/* ===== HELMETS ===== */
-function buildHelmet(type){
-  if(helmetGrp){spartan.remove(helmetGrp);disposeGrp(helmetGrp)}
-  helmetGrp = new THREE.Group();
-  helmetGrp.position.set(0,B.headY,0);
-  const hw=0.115,hh=0.13,hd=0.14;
-  ({markv:hMarkV,markvi:hMarkVI,eva:hEVA,cqb:hCQB,scout:hScout,recon:hRecon,odst:hODST,hayabusa:hHayabusa})[type](helmetGrp,hw,hh,hd);
-  spartan.add(helmetGrp);
-}
-
-function helmetDome(pts,segs=32){return latheProfile(pts,segs)}
-
-function hMarkV(g,hw,hh,hd){
-  const p=[];
-  for(let i=0;i<=24;i++){const t=i/24,a=t*Math.PI;let r=Math.sin(a)*hw*1.1;const y=Math.cos(a)*hh*1.05;
-    if(t>0.7)r*=0.85+0.15*(1-t)/0.3;if(t<0.3)r*=0.95;p.push([Math.max(r,0.001),y])}
-  const dg=helmetDome(p);deform(dg,v=>{v.z*=0.92});addM(g,dg,primaryMat,'p');
-  const jg=roundBox(hw*1.8,hh*0.5,hd*0.7,0.02);jg.translate(0,-hh*0.65,hd*0.15);
-  deform(jg,v=>{if(v.y<-hh*0.8)v.z-=0.02;v.x*=1-Math.max(0,(-v.y-hh*0.5))*0.3});
-  addM(g,jg,primaryMat,'p');
-  const bg=curvedPanel(hw*2.1,hh*0.2,0.005,0.015,16,4);bg.translate(0,hh*0.15,hd*0.82);
-  addM(g,bg,secondaryMat,'s');
-  addM(g,visorBand(hw*1.65,hh*0.45,hd*0.74,0.04,0.015),visorMat,'v');
-  const rg=curvedPanel(0.015,hh*0.7,0.005,0.008,3,8);rg.translate(0,hh*0.5,hd*0.25);
-  addM(g,rg,secondaryMat,'s');
-}
-
-function hMarkVI(g,hw,hh,hd){
-  const p=[];
-  for(let i=0;i<=24;i++){const t=i/24,a=t*Math.PI;let r=Math.sin(a)*hw*1.08;const y=Math.cos(a)*hh*1.02;
-    if(t>0.5&&t<0.8)r*=0.92;if(t>0.75)r*=0.8+0.2*(1-t)/0.25;p.push([Math.max(r,0.001),y])}
-  const dg=helmetDome(p);deform(dg,v=>{v.z*=0.88;if(v.y<-hh*0.3){const f=(-v.y-hh*0.3)/(hh*0.7);v.x*=1-f*0.15;v.z-=f*0.015}});
-  addM(g,dg,primaryMat,'p');
-  const bg=curvedPanel(hw*2.2,hh*0.25,0.008,0.02,20,4);bg.translate(0,hh*0.2,hd*0.78);
-  addM(g,bg,secondaryMat,'s');
-  const cg=roundBox(hw*1.2,hh*0.3,hd*0.4,0.015);cg.translate(0,-hh*0.85,hd*0.25);
-  deform(cg,v=>{v.x*=1-Math.max(0,-v.y-hh*0.7)*0.5});
-  addM(g,cg,primaryMat,'p');
-  addM(g,visorBand(hw*1.85,hh*0.5,hd*0.73,0.045,0.02),visorMat,'v');
-  [-1,1].forEach(s=>{
-    const vg=curvedPanel(0.02,0.04,0.003,0.005,3,3);vg.rotateY(s*1.3);vg.translate(s*hw*0.95,-hh*0.15,hd*0.4);
-    addM(g,vg,secondaryMat,'s')});
-  const rg=curvedPanel(0.018,hh*0.8,0.006,0.01,3,10);rg.translate(0,hh*0.45,hd*0.2);
-  addM(g,rg,secondaryMat,'s');
-}
-
-function hEVA(g,hw,hh,hd){
-  const p=[];for(let i=0;i<=24;i++){const t=i/24,a=t*Math.PI;let r=Math.sin(a)*hw*1.15;const y=Math.cos(a)*hh;
-    if(t>0.7)r*=0.8;p.push([Math.max(r,0.001),y])}
-  const dg=helmetDome(p);deform(dg,v=>{v.z*=0.95});addM(g,dg,primaryMat,'p');
-  const jg=roundBox(hw*1.6,hh*0.4,hd*0.6,0.02);jg.translate(0,-hh*0.65,hd*0.1);addM(g,jg,primaryMat,'p');
-  // Large bubble visor
-  const vg=new THREE.SphereGeometry(hw*1.15,28,20,0,Math.PI*2,0,Math.PI*0.55);
-  vg.rotateX(Math.PI*0.15);vg.translate(0,hh*0.1,hd*0.15);
-  deform(vg,v=>{if(v.z<hd*0.1)v.z=hd*0.1});
-  addM(g,vg,visorMat,'v');
-  const rg=new THREE.TorusGeometry(hw*0.85,0.008,8,32,Math.PI*1.3);
-  rg.rotateY(Math.PI);rg.rotateZ(Math.PI*0.15);rg.translate(0,hh*0.15,hd*0.72);
-  addM(g,rg,secondaryMat,'s');
-}
-
-function hCQB(g,hw,hh,hd){
-  const p=[];for(let i=0;i<=16;i++){const t=i/16,a=t*Math.PI;let r=Math.sin(a)*hw*1.05;const y=Math.cos(a)*hh;
-    if(t>0.3&&t<0.5)r*=1.05;if(t>0.65)r*=0.82;p.push([Math.max(r,0.001),y])}
-  const dg=helmetDome(p,10);deform(dg,v=>{v.z*=0.85;const ax=Math.abs(v.x);if(ax>hw*0.5)v.z-=(ax-hw*0.5)*0.15});
-  addM(g,dg,primaryMat,'p');
-  const jg=roundBox(hw*1.7,hh*0.45,hd*0.55,0.01);jg.translate(0,-hh*0.6,hd*0.15);addM(g,jg,secondaryMat,'s');
-  addM(g,visorBand(hw*1.7,hh*0.3,hd*0.72,0.03,0.008),visorMat,'v');
-  const cg2=curvedPanel(hw*0.6,hh*0.25,0.01,0.015,4,4);cg2.translate(0,-hh*0.55,hd*0.65);addM(g,cg2,primaryMat,'p');
-  [-1,1].forEach(s=>{const cp=curvedPanel(0.04,0.06,0.005,0.01,4,4);cp.rotateY(s*0.8);cp.translate(s*hw*0.95,-hh*0.2,hd*0.45);addM(g,cp,secondaryMat,'s')});
-}
-
-function hScout(g,hw,hh,hd){
-  const p=[];for(let i=0;i<=24;i++){const t=i/24,a=t*Math.PI;let r=Math.sin(a)*hw;const y=Math.cos(a)*hh*1.05;
-    if(t>0.5)r*=0.88;p.push([Math.max(r,0.001),y])}
-  const dg=helmetDome(p);deform(dg,v=>{v.z*=0.9;if(v.z>0&&v.y<hh*0.2)v.z+=0.03});addM(g,dg,primaryMat,'p');
-  const hsg=roundBox(hw*1.4,hh*0.55,hd*0.5,0.02);hsg.translate(0,-hh*0.1,hd*0.55);
-  deform(hsg,v=>{if(v.z>hd*0.6){v.x*=0.85;v.y*=0.9}});addM(g,hsg,secondaryMat,'s');
-  addM(g,visorBand(hw*1.4,hh*0.35,hd*0.78,0.05,0.01),visorMat,'v');
-  const ag=new THREE.CylinderGeometry(0.006,0.004,0.06,6);ag.translate(hw*0.7,hh*0.65,-hd*0.2);addM(g,ag,secondaryMat,'s');
-}
-
-function hRecon(g,hw,hh,hd){
-  const p=[];for(let i=0;i<=24;i++){const t=i/24,a=t*Math.PI;let r=Math.sin(a)*hw*1.05;const y=Math.cos(a)*hh;
-    if(t>0.6)r*=0.85;p.push([Math.max(r,0.001),y])}
-  const dg=helmetDome(p);deform(dg,v=>{v.z*=0.88});addM(g,dg,primaryMat,'p');
-  // Beak
-  const bs=new THREE.Shape();bs.moveTo(0,0);bs.lineTo(0.05,0);bs.lineTo(0.06,-0.03);bs.lineTo(0.04,-0.08);bs.lineTo(0.01,-0.1);bs.lineTo(0,-0.08);
-  const bg2=new THREE.ExtrudeGeometry(bs,{depth:hw*1.6,bevelEnabled:true,bevelThickness:0.005,bevelSize:0.005,bevelSegments:2});
-  bg2.translate(0,-hh*0.15,-hw*0.8);bg2.rotateY(Math.PI/2);bg2.rotateZ(Math.PI);bg2.translate(0,-hh*0.15,hd*0.65);
-  addM(g,bg2,secondaryMat,'s');
-  addM(g,visorBand(hw*1.6,hh*0.35,hd*0.68,0.035,0.01),visorMat,'v');
-  const jg=roundBox(hw*1.5,hh*0.35,hd*0.45,0.015);jg.translate(0,-hh*0.65,hd*0.15);addM(g,jg,primaryMat,'p');
-  const cg=new THREE.CylinderGeometry(0.015,0.012,0.04,8);cg.rotateZ(Math.PI/2);cg.translate(hw,-hh*0.1,hd*0.15);addM(g,cg,secondaryMat,'s');
-}
-
-function hODST(g,hw,hh,hd){
-  const p=[[0.001,hh*1.05],[hw*0.6,hh],[hw*0.95,hh*0.85],[hw*1.05,hh*0.5],[hw*1.05,0],
-    [hw*1.02,-hh*0.3],[hw*0.95,-hh*0.6],[hw*0.85,-hh*0.8],[hw*0.5,-hh*0.95],[0.001,-hh]];
-  const dg=helmetDome(p);deform(dg,v=>{v.z*=0.85;if(v.z>hd*0.3)v.z=hd*0.3+(v.z-hd*0.3)*0.7});
-  addM(g,dg,primaryMat,'p');
-  const fg=curvedPanel(hw*1.6,hh,0.01,0.025,10,10);fg.translate(0,-hh*0.1,hd*0.72);addM(g,fg,secondaryMat,'s');
-  addM(g,visorBand(hw*1.2,hh*0.28,hd*0.75,0.02,0.008),visorMat,'v');
-  const mg=curvedPanel(hw*0.8,hh*0.2,0.008,0.012,6,4);mg.translate(0,-hh*0.45,hd*0.75);addM(g,mg,primaryMat,'p');
-  [-1,1].forEach(s=>{const sp=curvedPanel(0.04,hh*0.6,0.005,0.01,4,6);sp.rotateY(s*1.2);sp.translate(s*hw*0.98,0,hd*0.25);addM(g,sp,secondaryMat,'s')});
-}
-
-function hHayabusa(g,hw,hh,hd){
-  const p=[];for(let i=0;i<=24;i++){const t=i/24,a=t*Math.PI;let r=Math.sin(a)*hw*1.05;const y=Math.cos(a)*hh;
-    if(t>0.6)r*=0.87;p.push([Math.max(r,0.001),y])}
-  const dg=helmetDome(p);deform(dg,v=>{v.z*=0.88});addM(g,dg,primaryMat,'p');
-  // Blade
-  const bls=new THREE.Shape();bls.moveTo(0,0);bls.lineTo(0.005,0.12);bls.quadraticCurveTo(0.003,0.17,0,0.18);bls.quadraticCurveTo(-0.003,0.17,-0.005,0.12);bls.lineTo(0,0);
-  const blg=new THREE.ExtrudeGeometry(bls,{depth:hd*1.3,bevelEnabled:true,bevelThickness:0.003,bevelSize:0.003,bevelSegments:2});
-  blg.translate(0,hh*0.85,-hd*0.65);addM(g,blg,secondaryMat,'s');
-  addM(g,visorBand(hw*1.5,hh*0.3,hd*0.73,0.035,0.008),visorMat,'v');
-  const mg=curvedPanel(hw*1.5,hh*0.4,0.01,0.02,10,6);mg.translate(0,-hh*0.35,hd*0.68);
-  deform(mg,v=>{const tx=v.x/(hw*0.75);if(v.y<-hh*0.3)v.z-=0.01;v.z+=Math.abs(tx)*0.005});
-  addM(g,mg,primaryMat,'p');
-  [-1,1].forEach(s=>{const hg=new THREE.ConeGeometry(0.012,0.06,6);hg.rotateZ(s*-0.7);hg.translate(s*hw*0.85,hh*0.5,-hd*0.1);addM(g,hg,secondaryMat,'s')});
-  const jg=roundBox(hw*1.4,hh*0.3,hd*0.4,0.015);jg.translate(0,-hh*0.7,hd*0.1);addM(g,jg,primaryMat,'p');
-}
-
-/* ===== CHEST ===== */
-function buildChest(type){
-  if(chestGrp){spartan.remove(chestGrp);disposeGrp(chestGrp)}
-  chestGrp = new THREE.Group();
-  const cw=0.19,ch=0.22,cd=0.12;
-  // Front plate
-  const fg=curvedPanel(cw*2,ch*1.8,0.01,0.04,16,16);fg.translate(0,B.chestY+0.02,cd*0.8);
-  deform(fg,v=>{const t=(v.y-(B.chestY-ch*0.5))/(ch*1.8);v.x*=0.85+0.15*Math.min(t,1);
-    const sx=Math.abs(v.x)/cw;if(sx>0.7)v.z-=(sx-0.7)*0.03});
-  addM(chestGrp,fg,primaryMat,'p');
-  // Back
-  const bg=curvedPanel(cw*1.9,ch*1.7,0.01,0.03,12,12);bg.rotateY(Math.PI);bg.translate(0,B.chestY+0.02,-cd*0.75);
-  addM(chestGrp,bg,primaryMat,'p');
-  // Collar
-  const clg=new THREE.TorusGeometry(0.11,0.02,8,24,Math.PI);clg.rotateX(-Math.PI/6);clg.translate(0,B.shoulderY+0.03,cd*0.15);
-  addM(chestGrp,clg,secondaryMat,'s');
-  // Belt
-  const btg=new THREE.TorusGeometry(0.155,0.018,8,24);btg.rotateX(Math.PI/2);btg.translate(0,B.waistY+0.02,0);
-  addM(chestGrp,btg,secondaryMat,'s');
-  // Cod
-  const cpg=curvedPanel(0.1,0.12,0.008,0.02,6,6);cpg.translate(0,B.hipY+0.02,cd*0.5);addM(chestGrp,cpg,primaryMat,'p');
-  // Sides
-  [-1,1].forEach(s=>{const sg=curvedPanel(0.06,ch*1.4,0.008,0.015,4,10);sg.rotateY(s*1.4);sg.translate(s*cw*0.95,B.chestY,cd*0.2);addM(chestGrp,sg,primaryMat,'p')});
-
-  // Variant details
-  if(type==='tactical'){
-    [-1,1].forEach(s=>{const pg=roundBox(0.05,0.04,0.025,0.005);pg.translate(s*0.07,B.chestY-0.05,cd*0.92);addM(chestGrp,pg,secondaryMat,'s')});
-    const ug=roundBox(0.04,0.06,0.02,0.005);ug.translate(0,B.chestY+0.08,cd*0.95);addM(chestGrp,ug,secondaryMat,'s');
-  } else if(type==='assault'){
-    const hg=curvedPanel(cw*1.6,ch,0.015,0.05,12,8);hg.translate(0,B.chestY+0.08,cd*0.88);addM(chestGrp,hg,secondaryMat,'s');
-    const rg=new THREE.TorusGeometry(0.12,0.025,8,24,Math.PI);rg.rotateX(-Math.PI/5);rg.translate(0,B.shoulderY+0.04,cd*0.15);addM(chestGrp,rg,primaryMat,'p');
-  } else if(type==='recon'){
-    const rg=curvedPanel(0.015,ch*1.4,0.008,0.01,3,10);rg.translate(0,B.chestY+0.02,cd*0.88);addM(chestGrp,rg,secondaryMat,'s');
-    [-1,1].forEach(s=>{const sg=curvedPanel(0.008,ch*1.2,0.005,0.008,2,8);sg.translate(s*0.06,B.chestY,cd*0.87);addM(chestGrp,sg,secondaryMat,'s')});
-  } else if(type==='grenadier'){
-    const eg=curvedPanel(cw*1.4,ch*0.6,0.012,0.035,10,6);eg.translate(0,B.chestY+0.12,cd*0.9);addM(chestGrp,eg,secondaryMat,'s');
-    for(let i=0;i<5;i++){const ag=new THREE.CylinderGeometry(0.008,0.008,0.025,6);ag.rotateX(Math.PI/2);ag.translate(-0.06+i*0.03,B.chestY+0.05-i*0.025,cd*0.92);addM(chestGrp,ag,secondaryMat,'s')}
-  }
-  spartan.add(chestGrp);
-}
-
-/* ===== SHOULDERS ===== */
-function buildShoulders(type){
-  if(shoulderLGrp){spartan.remove(shoulderLGrp);disposeGrp(shoulderLGrp)}
-  if(shoulderRGrp){spartan.remove(shoulderRGrp);disposeGrp(shoulderRGrp)}
-  shoulderLGrp=new THREE.Group();shoulderRGrp=new THREE.Group();
-  buildShoulder(shoulderLGrp,type,-1);
-  buildShoulder(shoulderRGrp,type,1);
-  spartan.add(shoulderLGrp);spartan.add(shoulderRGrp);
-}
-
-function buildShoulder(grp,type,side){
-  const sx=side*B.shoulderW, sy=B.shoulderY, sw=0.08, sh=0.1, sd=0.06;
-  const pg=new THREE.SphereGeometry(sw,16,12,0,Math.PI*2,0,Math.PI*0.55);
-  pg.rotateX(Math.PI*0.1);pg.rotateZ(side*-0.3);pg.scale(1,0.8,0.85);pg.translate(sx+side*0.03,sy+0.03,0);
-  addM(grp,pg,primaryMat,'p');
-
-  if(type==='security'){
-    const sg=curvedPanel(sw*2.2,sh*1.8,0.012,0.04,10,10);sg.rotateY(side*1.2);sg.translate(sx+side*0.06,sy,sd*0.2);addM(grp,sg,secondaryMat,'s');
-    const rg=curvedPanel(0.01,sh*1.4,0.005,0.008,2,8);rg.rotateY(side*1.2);rg.translate(sx+side*0.075,sy,sd*0.25);addM(grp,rg,primaryMat,'p');
-  } else if(type==='odst'){
-    const og=roundBox(sw*1.5,sh*1.2,sd,0.01);og.rotateY(side*0.5);og.translate(sx+side*0.04,sy-0.02,0);addM(grp,og,secondaryMat,'s');
-  } else if(type==='gungnir'){
-    const gg=roundBox(sw*2,sh*1.6,sd*1.4,0.012);gg.rotateY(side*0.4);gg.translate(sx+side*0.05,sy,0);addM(grp,gg,secondaryMat,'s');
-    const tg=curvedPanel(sw*1.5,0.008,0.005,0.01,6,2);tg.rotateY(side*0.4);tg.translate(sx+side*0.05,sy+sh*0.65,sd*0.3);addM(grp,tg,primaryMat,'p');
-  } else if(type==='markv'){
-    const mg=new THREE.SphereGeometry(sw*1.2,16,12,0,Math.PI*2,0,Math.PI*0.5);
-    mg.rotateZ(side*-0.4);mg.scale(1.1,0.7,0.9);mg.translate(sx+side*0.04,sy+0.02,0);addM(grp,mg,secondaryMat,'s');
-    const tg=new THREE.TorusGeometry(sw*0.75,0.005,6,16,Math.PI);tg.rotateY(side*Math.PI/2);tg.translate(sx+side*0.05,sy+0.01,0);addM(grp,tg,primaryMat,'p');
-  } else {
-    const dg=curvedPanel(sw*1.5,sh*1.3,0.008,0.025,8,8);dg.rotateY(side*1.0);dg.translate(sx+side*0.05,sy-0.01,sd*0.15);addM(grp,dg,secondaryMat,'s');
-  }
-}
-
-/* ===== UPDATE MATS ===== */
-function updateMats(){
-  makeMats();
-  spartan.traverse(c=>{
-    if(c.isMesh){
-      if(c.userData.mt==='p')c.material=primaryMat;
-      else if(c.userData.mt==='s')c.material=secondaryMat;
-      else if(c.userData.mt==='v')c.material=visorMat;
-      else if(c.userData.mt==='u')c.material=undersuitMat;
+    var spartans = Object.keys(SPARTAN_KEYS);
+    for (var s = 0; s < spartans.length; s++) {
+      state.materialMap[spartans[s]] = { primary: [], secondary: [], visor: [], undersuit: [] };
     }
-  });
-}
 
-/* ===== BUILD ALL ===== */
-function buildAll(){
-  while(spartan.children.length){disposeGrp(spartan.children[0]);spartan.remove(spartan.children[0])}
-  buildBody();buildHelmet(S.helmet);buildChest(S.chest);buildShoulders(S.shoulder);
-}
+    var unclassified = [];
 
-/* ===== UI ===== */
-function buildUI(){
-  const hg=document.getElementById('helmet-grid');
-  HELMETS.forEach(h=>{const b=document.createElement('div');b.className='variant-btn'+(S.helmet===h.id?' active':'');
-    b.innerHTML='<span class="icon">'+h.icon+'</span><span class="label">'+h.name+'</span>';
-    b.dataset.type='helmet';b.dataset.id=h.id;
-    b.onclick=()=>{S.helmet=h.id;buildHelmet(h.id);updateMats();updateActive();updURL()};hg.appendChild(b)});
+    materials.forEach(function(mat, i) {
+      var name = (mat.name || '').toLowerCase();
+      log('  [' + i + '] "' + mat.name + '" channels: ' + Object.keys(mat.channels || {}).join(', '));
 
-  const cg=document.getElementById('chest-grid');
-  CHESTS.forEach(c=>{const b=document.createElement('div');b.className='variant-btn'+(S.chest===c.id?' active':'');
-    b.innerHTML='<span class="icon">'+c.icon+'</span><span class="label">'+c.name+'</span>';
-    b.dataset.type='chest';b.dataset.id=c.id;
-    b.onclick=()=>{S.chest=c.id;buildChest(c.id);updateMats();updateActive();updURL()};cg.appendChild(b)});
+      // Store defaults
+      var albedo = mat.channels && mat.channels.AlbedoPBR && mat.channels.AlbedoPBR.color
+        ? mat.channels.AlbedoPBR.color.slice() : [1,1,1];
+      var emissive = mat.channels && mat.channels.EmitColor && mat.channels.EmitColor.color
+        ? mat.channels.EmitColor.color.slice() : [0,0,0];
+      state.defaultMaterials[mat.name] = { albedo: albedo, emissive: emissive };
 
-  const sg=document.getElementById('shoulder-grid');
-  SHOULDERS.forEach(s=>{const b=document.createElement('div');b.className='variant-btn'+(S.shoulder===s.id?' active':'');
-    b.innerHTML='<span class="icon">'+s.icon+'</span><span class="label">'+s.name+'</span>';
-    b.dataset.type='shoulder';b.dataset.id=s.id;
-    b.onclick=()=>{S.shoulder=s.id;buildShoulders(s.id);updateMats();updateActive();updURL()};sg.appendChild(b)});
+      // Match to spartan
+      var matchedSpartan = null;
+      for (var sk in SPARTAN_KEYS) {
+        var keywords = SPARTAN_KEYS[sk];
+        for (var ki = 0; ki < keywords.length; ki++) {
+          if (name.indexOf(keywords[ki]) !== -1) {
+            matchedSpartan = sk;
+            break;
+          }
+        }
+        if (matchedSpartan) break;
+      }
 
-  const vg=document.getElementById('visor-presets');
-  VISOR_COLORS.forEach(v=>{const b=document.createElement('div');b.className='visor-preset'+(S.visorColor===v.c?' active':'');
-    b.style.backgroundColor=v.c;b.title=v.n;b.dataset.color=v.c;
-    if(S.visorColor===v.c)b.style.boxShadow='0 0 12px '+v.c;
-    b.onclick=()=>{S.visorColor=v.c;updateMats();updVisor();updURL()};vg.appendChild(b)});
+      if (!matchedSpartan) {
+        unclassified.push(mat);
+        return;
+      }
 
-  document.getElementById('primary-color').addEventListener('input',e=>{S.primaryColor=e.target.value;updateMats();updURL()});
-  document.getElementById('secondary-color').addEventListener('input',e=>{S.secondaryColor=e.target.value;updateMats();updURL()});
+      // Classify type
+      var type = 'primary';
+      for (var cat in CLASSIFY) {
+        var catKeys = CLASSIFY[cat];
+        for (var ci = 0; ci < catKeys.length; ci++) {
+          if (name.indexOf(catKeys[ci]) !== -1) {
+            type = cat;
+            break;
+          }
+        }
+        if (type !== 'primary') break;
+      }
 
-  const pg=document.getElementById('preset-grid');
-  PRESETS.forEach(p=>{const b=document.createElement('button');b.className='preset-btn';b.textContent=p.name;
-    b.onclick=()=>applyPreset(p);pg.appendChild(b)});
-}
+      state.materialMap[matchedSpartan][type].push(mat);
+      log('    -> ' + matchedSpartan + ' / ' + type);
+    });
 
-function updateActive(){document.querySelectorAll('.variant-btn').forEach(b=>{b.classList.toggle('active',S[b.dataset.type]===b.dataset.id)})}
-function updVisor(){document.querySelectorAll('.visor-preset').forEach(b=>{const a=b.dataset.color===S.visorColor;b.classList.toggle('active',a);b.style.boxShadow=a?'0 0 12px '+b.dataset.color:''})}
+    // Check if we found anything
+    var totalMapped = 0;
+    for (var sp in state.materialMap) {
+      var groups = state.materialMap[sp];
+      totalMapped += groups.primary.length + groups.secondary.length + groups.visor.length;
+    }
 
-function applyPreset(p){
-  S.helmet=p.h;S.chest=p.c;S.shoulder=p.s;S.primaryColor=p.p;S.secondaryColor=p.q;S.visorColor=p.v;
-  document.getElementById('primary-color').value=p.p;document.getElementById('secondary-color').value=p.q;
-  buildAll();updateActive();updVisor();updURL();
-}
+    if (totalMapped === 0) {
+      log('\nNo spartan-specific materials found. Assigning all to all spartans.');
+      materials.forEach(function(mat) {
+        var name = (mat.name || '').toLowerCase();
+        var type = 'primary';
+        for (var cat in CLASSIFY) {
+          var catKeys = CLASSIFY[cat];
+          for (var ci = 0; ci < catKeys.length; ci++) {
+            if (name.indexOf(catKeys[ci]) !== -1) { type = cat; break; }
+          }
+          if (type !== 'primary') break;
+        }
+        for (var sp in state.materialMap) {
+          state.materialMap[sp][type].push(mat);
+        }
+      });
+    }
 
-/* ===== ACTIONS ===== */
-document.getElementById('btn-random').onclick=()=>{
-  S.helmet=HELMETS[Math.floor(Math.random()*HELMETS.length)].id;
-  S.chest=CHESTS[Math.floor(Math.random()*CHESTS.length)].id;
-  S.shoulder=SHOULDERS[Math.floor(Math.random()*SHOULDERS.length)].id;
-  S.primaryColor='#'+Math.floor(Math.random()*0xffffff).toString(16).padStart(6,'0');
-  S.secondaryColor='#'+Math.floor(Math.random()*0xffffff).toString(16).padStart(6,'0');
-  S.visorColor=VISOR_COLORS[Math.floor(Math.random()*VISOR_COLORS.length)].c;
-  document.getElementById('primary-color').value=S.primaryColor;
-  document.getElementById('secondary-color').value=S.secondaryColor;
-  buildAll();updateActive();updVisor();updURL();
-};
+    // Shared visor materials
+    if (unclassified.length > 0) {
+      log('\n' + unclassified.length + ' unclassified materials');
+      unclassified.forEach(function(mat) {
+        var name = (mat.name || '').toLowerCase();
+        var isVisor = false;
+        for (var vi = 0; vi < CLASSIFY.visor.length; vi++) {
+          if (name.indexOf(CLASSIFY.visor[vi]) !== -1) { isVisor = true; break; }
+        }
+        if (isVisor) {
+          for (var sp in state.materialMap) {
+            state.materialMap[sp].visor.push(mat);
+          }
+        }
+      });
+    }
 
-document.getElementById('btn-share').onclick=()=>{
-  updURL();
-  if(navigator.clipboard){navigator.clipboard.writeText(window.location.href).then(()=>toast('URL copied!'))}
-  else{prompt('Copy:',window.location.href)}
-};
-
-document.getElementById('btn-export').onclick=()=>{
-  composer.render();
-  const a=document.createElement('a');a.download='spartan-'+Date.now()+'.png';a.href=renderer.domElement.toDataURL('image/png');a.click();
-  toast('PNG exported!');
-};
-
-document.getElementById('panel-toggle').onclick=()=>{
-  const p=document.getElementById('panel');
-  p.classList.toggle('hidden');p.classList.toggle('show');
-};
-
-function toast(msg){
-  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),2000);
-}
-
-/* ===== URL STATE ===== */
-function updURL(){
-  const u=new URLSearchParams();
-  u.set('h',S.helmet);u.set('c',S.chest);u.set('s',S.shoulder);
-  u.set('p',S.primaryColor.replace('#',''));u.set('q',S.secondaryColor.replace('#',''));u.set('v',S.visorColor.replace('#',''));
-  history.replaceState(null,'','?'+u.toString());
-}
-function loadURL(){
-  const u=new URLSearchParams(window.location.search);
-  if(u.has('h'))S.helmet=u.get('h');if(u.has('c'))S.chest=u.get('c');if(u.has('s'))S.shoulder=u.get('s');
-  if(u.has('p'))S.primaryColor='#'+u.get('p');if(u.has('q'))S.secondaryColor='#'+u.get('q');if(u.has('v'))S.visorColor='#'+u.get('v');
-  document.getElementById('primary-color').value=S.primaryColor;document.getElementById('secondary-color').value=S.secondaryColor;
-}
-
-/* ===== PARTICLES ===== */
-const pCount=200, pPos=new Float32Array(pCount*3);
-for(let i=0;i<pCount;i++){pPos[i*3]=(Math.random()-0.5)*6;pPos[i*3+1]=Math.random()*4;pPos[i*3+2]=(Math.random()-0.5)*6}
-const pGeo=new THREE.BufferGeometry();pGeo.setAttribute('position',new THREE.BufferAttribute(pPos,3));
-scene.add(new THREE.Points(pGeo, new THREE.PointsMaterial({color:0x00b4ff,size:0.008,transparent:true,opacity:0.3})));
-
-/* ===== ANIMATION ===== */
-let interacting=false;
-controls.addEventListener('start',()=>{interacting=true});
-controls.addEventListener('end',()=>{setTimeout(()=>{interacting=false},2000)});
-
-function animate(){
-  requestAnimationFrame(animate);
-  controls.update();
-  if(!interacting)spartan.rotation.y+=0.002;
-  // Animate particles
-  const pp=pGeo.attributes.position;
-  for(let i=0;i<pCount;i++){
-    let y=pp.getY(i)+0.002;if(y>4)y=0;pp.setY(i,y);
+    log('\n=== MATERIAL MAP SUMMARY ===');
+    for (var sp2 in state.materialMap) {
+      var g = state.materialMap[sp2];
+      log(sp2 + ': primary=' + g.primary.length + ' secondary=' + g.secondary.length + ' visor=' + g.visor.length + ' undersuit=' + g.undersuit.length);
+    }
+    log('');
   }
-  pp.needsUpdate=true;
-  composer.render();
-}
 
-/* ===== RESIZE ===== */
-window.addEventListener('resize',()=>{
-  camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth,window.innerHeight);composer.setSize(window.innerWidth,window.innerHeight);
-});
+  // ========== NODE MAPPING ==========
+  function classifyNodes(nodeMap) {
+    log('=== NODE DISCOVERY ===');
 
-/* ===== INIT ===== */
-loadURL();
-buildUI();
-buildAll();
-setTimeout(()=>{
-  document.getElementById('loading').classList.add('done');
-  setTimeout(()=>{document.getElementById('loading').style.display='none'},500);
-},1800);
-animate();
-console.log('MJOLNIR FORGE v3 initialized');
+    for (var sp in SPARTAN_KEYS) {
+      state.nodeGroups[sp] = [];
+    }
+
+    var allNodes = Object.values(nodeMap);
+    log('Found ' + allNodes.length + ' nodes total\n');
+
+    // Find top-level groups for each spartan
+    var rootGroups = {};
+    allNodes.forEach(function(node) {
+      var name = (node.name || '').toLowerCase();
+      for (var sp in SPARTAN_KEYS) {
+        var keywords = SPARTAN_KEYS[sp];
+        for (var ki = 0; ki < keywords.length; ki++) {
+          if (name.indexOf(keywords[ki]) !== -1) {
+            if (!rootGroups[sp]) rootGroups[sp] = {};
+            if (!rootGroups[sp][node.instanceID]) {
+              rootGroups[sp][node.instanceID] = true;
+              state.nodeGroups[sp].push(node.instanceID);
+              if (node.type === 'Group' || node.type === 'MatrixTransform') {
+                log('  Node "' + node.name + '" [' + node.type + '] -> ' + sp + ' (ID: ' + node.instanceID + ')');
+              }
+            }
+            break;
+          }
+        }
+      }
+    });
+
+    // Top-level nodes debug
+    var topNodes = allNodes.filter(function(n) {
+      return (n.type === 'Group' || n.type === 'MatrixTransform') && (!n.depth || n.depth <= 2);
+    });
+    if (topNodes.length > 0 && topNodes.length < 50) {
+      log('\nTop-level groups:');
+      topNodes.forEach(function(n) {
+        log('  "' + n.name + '" type=' + n.type + ' id=' + n.instanceID);
+      });
+    }
+
+    log('\n=== NODE MAP SUMMARY ===');
+    for (var sp2 in state.nodeGroups) {
+      log(sp2 + ': ' + state.nodeGroups[sp2].length + ' nodes');
+    }
+    log('');
+  }
+
+  // ========== APPLY COLORS ==========
+  function applyColors() {
+    if (!state.api) return;
+
+    var spartan = state.activeSpartan;
+    var groups = state.materialMap[spartan];
+    if (!groups) return;
+
+    var primaryRGB = hexToRGB01(state.primaryColor);
+    var secondaryRGB = hexToRGB01(state.secondaryColor);
+    var visorRGB = hexToRGB01(state.visorColor);
+
+    groups.primary.forEach(function(mat) {
+      if (mat.channels && mat.channels.AlbedoPBR) {
+        mat.channels.AlbedoPBR.color = primaryRGB;
+        if (mat.channels.DiffuseColor) mat.channels.DiffuseColor.color = primaryRGB;
+      }
+      state.api.setMaterial(mat, function() {});
+    });
+
+    groups.secondary.forEach(function(mat) {
+      if (mat.channels && mat.channels.AlbedoPBR) {
+        mat.channels.AlbedoPBR.color = secondaryRGB;
+        if (mat.channels.DiffuseColor) mat.channels.DiffuseColor.color = secondaryRGB;
+      }
+      state.api.setMaterial(mat, function() {});
+    });
+
+    groups.visor.forEach(function(mat) {
+      if (mat.channels) {
+        if (mat.channels.AlbedoPBR) mat.channels.AlbedoPBR.color = visorRGB;
+        if (mat.channels.EmitColor) {
+          mat.channels.EmitColor.enable = true;
+          mat.channels.EmitColor.color = visorRGB;
+          mat.channels.EmitColor.factor = 0.7;
+        }
+        if (mat.channels.DiffuseColor) mat.channels.DiffuseColor.color = visorRGB;
+      }
+      state.api.setMaterial(mat, function() {});
+    });
+  }
+
+  // ========== SHOW/HIDE SPARTANS ==========
+  function showSpartan(targetSpartan) {
+    if (!state.api || !state.nodeMap) return;
+
+    var hasGroups = false;
+    for (var sp in state.nodeGroups) {
+      if (state.nodeGroups[sp].length > 0) { hasGroups = true; break; }
+    }
+    if (!hasGroups) {
+      log('No node groups discovered - cannot show/hide');
+      return;
+    }
+
+    for (var sp2 in state.nodeGroups) {
+      var ids = state.nodeGroups[sp2];
+      for (var i = 0; i < ids.length; i++) {
+        if (sp2 === targetSpartan) {
+          state.api.show(ids[i]);
+        } else {
+          state.api.hide(ids[i]);
+        }
+      }
+    }
+  }
+
+  // ========== CAMERA ==========
+  var CAMERA_POSITIONS = {
+    masterchief: { eye: [2, 1.5, 2],   target: [0, 0.8, 0] },
+    fred:        { eye: [-2, 1.5, 2],  target: [-1, 0.8, 0] },
+    kelly:       { eye: [0, 1.5, 3],   target: [0, 0.8, 0] },
+    linda:       { eye: [2, 1.5, -1],  target: [1, 0.8, 0] },
+  };
+
+  function focusCamera(spartan) {
+    if (!state.api) return;
+    var cam = CAMERA_POSITIONS[spartan] || CAMERA_POSITIONS.masterchief;
+    state.api.setCameraLookAt(cam.eye, cam.target, 1.2);
+  }
+
+  // ========== BUILD PRESET UI ==========
+  function buildPresetUI() {
+    var grid = document.getElementById('preset-grid');
+    PRESETS.forEach(function(preset) {
+      var btn = document.createElement('button');
+      btn.className = 'preset-btn';
+      btn.innerHTML =
+        '<div class="preset-colors">' +
+          '<div class="preset-swatch" style="background:' + preset.primary + '"></div>' +
+          '<div class="preset-swatch" style="background:' + preset.secondary + '"></div>' +
+          '<div class="preset-swatch" style="background:' + preset.visor + '"></div>' +
+        '</div>' +
+        '<span class="preset-name">' + preset.name + '</span>';
+      btn.addEventListener('click', function() {
+        state.primaryColor = preset.primary;
+        state.secondaryColor = preset.secondary;
+        state.visorColor = preset.visor;
+        document.getElementById('color-primary').value = preset.primary;
+        document.getElementById('color-secondary').value = preset.secondary;
+        document.getElementById('hex-primary').textContent = preset.primary.toUpperCase();
+        document.getElementById('hex-secondary').textContent = preset.secondary.toUpperCase();
+        document.querySelectorAll('.visor-btn').forEach(function(v) { v.classList.remove('active'); });
+        document.querySelectorAll('.preset-btn').forEach(function(p) { p.classList.remove('active'); });
+        btn.classList.add('active');
+        applyColors();
+      });
+      grid.appendChild(btn);
+    });
+  }
+
+  // ========== INITIALIZE VIEWER ==========
+  function initViewer() {
+    var iframe = document.getElementById('api-frame');
+    var client = new Sketchfab(iframe);
+
+    setLoadingStatus('CONNECTING TO SKETCHFAB...');
+
+    client.init('c727e95065fc40b999cdfdc6ca4dc394', {
+      success: function(api) {
+        state.api = api;
+        setLoadingStatus('LOADING 3D MODEL...');
+
+        api.start();
+
+        api.addEventListener('viewerready', function() {
+          setLoadingStatus('SCANNING MATERIALS...');
+          log('Viewer ready!');
+
+          api.getMaterialList(function(err, materials) {
+            if (err) {
+              log('ERROR getting materials: ' + err);
+              return;
+            }
+            state.materials = materials;
+            classifyMaterials(materials);
+
+            setLoadingStatus('MAPPING NODES...');
+            api.getNodeMap(function(err2, nodeMap) {
+              if (!err2 && nodeMap) {
+                state.nodeMap = nodeMap;
+                classifyNodes(nodeMap);
+              } else {
+                log('Could not get node map: ' + (err2 || 'empty'));
+              }
+
+              setLoadingStatus('FORGE READY');
+              document.getElementById('status-dot').classList.add('connected');
+
+              setTimeout(function() {
+                document.getElementById('loading-overlay').classList.add('hidden');
+              }, 600);
+
+              log('=== MJOLNIR FORGE READY ===\n');
+            });
+          });
+        });
+      },
+      error: function() {
+        setLoadingStatus('VIEWER ERROR - REFRESH TO RETRY');
+        document.getElementById('status-dot').classList.add('error');
+        log('ERROR: Sketchfab viewer failed to initialize');
+      },
+      ui_controls: 0,
+      ui_infos: 0,
+      ui_watermark: 0,
+      ui_watermark_link: 0,
+      ui_stop: 0,
+      ui_help: 0,
+      ui_settings: 0,
+      ui_inspector: 0,
+      ui_annotations: 0,
+      ui_fullscreen: 0,
+      ui_hint: 0,
+      ui_loading: 0,
+      autostart: 1,
+      transparent: 0,
+      autospin: 0,
+    });
+  }
+
+  // ========== EVENT HANDLERS ==========
+  function setupEvents() {
+    // Panel toggle
+    document.getElementById('toggle-panel').addEventListener('click', function() {
+      state.panelOpen = !state.panelOpen;
+      document.getElementById('control-panel').classList.toggle('collapsed', !state.panelOpen);
+    });
+
+    // Character selector
+    document.querySelectorAll('.char-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var spartan = btn.dataset.spartan;
+        state.activeSpartan = spartan;
+        document.querySelectorAll('.char-btn').forEach(function(b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        showSpartan(spartan);
+        focusCamera(spartan);
+        applyColors();
+      });
+    });
+
+    // Primary color
+    document.getElementById('color-primary').addEventListener('input', function(e) {
+      state.primaryColor = e.target.value;
+      document.getElementById('hex-primary').textContent = e.target.value.toUpperCase();
+      applyColors();
+    });
+
+    // Secondary color
+    document.getElementById('color-secondary').addEventListener('input', function(e) {
+      state.secondaryColor = e.target.value;
+      document.getElementById('hex-secondary').textContent = e.target.value.toUpperCase();
+      applyColors();
+    });
+
+    // Visor presets
+    document.querySelectorAll('.visor-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        state.visorColor = btn.dataset.color;
+        document.querySelectorAll('.visor-btn').forEach(function(v) { v.classList.remove('active'); });
+        btn.classList.add('active');
+        applyColors();
+      });
+    });
+
+    // Random
+    document.getElementById('btn-random').addEventListener('click', function() {
+      state.primaryColor = randomHex();
+      state.secondaryColor = randomHex();
+      var visorColors = ['#ffd54f','#42a5f5','#bdbdbd','#ef5350','#66bb6a','#ab47bc','#ff9800','#e91e63'];
+      state.visorColor = visorColors[Math.floor(Math.random() * visorColors.length)];
+      document.getElementById('color-primary').value = state.primaryColor;
+      document.getElementById('color-secondary').value = state.secondaryColor;
+      document.getElementById('hex-primary').textContent = state.primaryColor.toUpperCase();
+      document.getElementById('hex-secondary').textContent = state.secondaryColor.toUpperCase();
+      document.querySelectorAll('.visor-btn').forEach(function(v) { v.classList.remove('active'); });
+      document.querySelectorAll('.preset-btn').forEach(function(p) { p.classList.remove('active'); });
+      applyColors();
+    });
+
+    // Reset
+    document.getElementById('btn-reset').addEventListener('click', function() {
+      if (!state.api) return;
+      state.materials.forEach(function(mat) {
+        var defaults = state.defaultMaterials[mat.name];
+        if (defaults && mat.channels) {
+          if (mat.channels.AlbedoPBR) mat.channels.AlbedoPBR.color = defaults.albedo.slice();
+          if (mat.channels.EmitColor) mat.channels.EmitColor.color = defaults.emissive.slice();
+          if (mat.channels.DiffuseColor) mat.channels.DiffuseColor.color = defaults.albedo.slice();
+          state.api.setMaterial(mat, function() {});
+        }
+      });
+
+      state.primaryColor = '#4a7c2e';
+      state.secondaryColor = '#2e4a1e';
+      state.visorColor = '#ffd54f';
+      document.getElementById('color-primary').value = '#4a7c2e';
+      document.getElementById('color-secondary').value = '#2e4a1e';
+      document.getElementById('hex-primary').textContent = '#4A7C2E';
+      document.getElementById('hex-secondary').textContent = '#2E4A1E';
+      document.querySelectorAll('.visor-btn').forEach(function(v) { v.classList.remove('active'); });
+      document.querySelector('.visor-btn[data-color="#ffd54f"]').classList.add('active');
+      document.querySelectorAll('.preset-btn').forEach(function(p) { p.classList.remove('active'); });
+
+      if (state.nodeMap) {
+        for (var sp in state.nodeGroups) {
+          var ids = state.nodeGroups[sp];
+          for (var i = 0; i < ids.length; i++) {
+            state.api.show(ids[i]);
+          }
+        }
+      }
+    });
+
+    // Debug toggle
+    document.getElementById('debug-toggle').addEventListener('click', function() {
+      document.getElementById('material-log').classList.toggle('visible');
+    });
+  }
+
+  // ========== INIT ==========
+  document.addEventListener('DOMContentLoaded', function() {
+    buildPresetUI();
+    setupEvents();
+    initViewer();
+  });
+
+})();
 </script>
 </body>
 </html>
