@@ -3,1093 +3,742 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MJOLNIR FORGE — Spartan Armor Customizer</title>
+<title>⚒️ MJOLNIR FORGE v5 — Multi-Universe Character Customizer</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&display=swap');
-
-  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-
-  :root {
-    --cyan: #00e5ff;
-    --cyan-dim: #00b8d4;
-    --cyan-glow: rgba(0, 229, 255, 0.3);
-    --cyan-deep: rgba(0, 229, 255, 0.08);
-    --gold: #ffd54f;
-    --orange: #ff6d00;
-    --panel-bg: rgba(8, 12, 20, 0.82);
-    --panel-border: rgba(0, 229, 255, 0.18);
-    --panel-highlight: rgba(0, 229, 255, 0.06);
-    --text-primary: #e0e6ed;
-    --text-secondary: #8a9bb0;
-    --text-dim: #4a5568;
-    --danger: #ff1744;
-    --success: #00e676;
-  }
-
-  html, body {
-    width: 100%; height: 100%;
-    overflow: hidden;
-    background: #000;
-    font-family: 'Rajdhani', sans-serif;
-    color: var(--text-primary);
-    -webkit-font-smoothing: antialiased;
-  }
-
-  /* === IFRAME (3D VIEWPORT) === */
-  #api-frame {
-    position: fixed; inset: 0;
-    width: 100%; height: 100%;
-    border: none; z-index: 1;
-    background: #050810;
-  }
-
-  /* === LOADING OVERLAY === */
-  #loading-overlay {
-    position: fixed; inset: 0; z-index: 1000;
-    background: radial-gradient(ellipse at center, #0a1628 0%, #030608 100%);
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    transition: opacity 0.8s ease, visibility 0.8s ease;
-  }
-  #loading-overlay.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
-  #loading-overlay .logo-text {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 2.8rem; font-weight: 900;
-    letter-spacing: 0.5em; text-indent: 0.5em;
-    background: linear-gradient(135deg, var(--cyan) 0%, #b2ebf2 50%, var(--cyan) 100%);
-    background-size: 200% 200%;
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    animation: shimmer 2.5s ease-in-out infinite;
-    margin-bottom: 2rem;
-  }
-  @keyframes shimmer { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
-
-  .loader-bar {
-    width: 280px; height: 3px;
-    background: rgba(0,229,255,0.1);
-    border-radius: 2px; overflow: hidden;
-    position: relative;
-  }
-  .loader-bar::after {
-    content: ''; position: absolute;
-    width: 40%; height: 100%;
-    background: var(--cyan);
-    border-radius: 2px;
-    animation: loadSlide 1.4s ease-in-out infinite;
-    box-shadow: 0 0 12px var(--cyan-glow);
-  }
-  @keyframes loadSlide { 0%{left:-40%} 100%{left:100%} }
-
-  #loading-status {
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 0.85rem; color: var(--text-secondary);
-    margin-top: 1.2rem; letter-spacing: 0.15em;
-    text-transform: uppercase;
-  }
-
-  /* === HEADER BAR === */
-  #header {
-    position: fixed; top: 0; left: 0; right: 0;
-    z-index: 100; height: 56px;
-    background: linear-gradient(180deg, rgba(5,8,16,0.95) 0%, rgba(5,8,16,0.7) 100%);
-    border-bottom: 1px solid var(--panel-border);
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 0 1.2rem;
-    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-  }
-  #header .title-group { display: flex; align-items: center; gap: 0.6rem; }
-  #header .forge-icon {
-    width: 32px; height: 32px;
-    background: linear-gradient(135deg, var(--cyan), var(--cyan-dim));
-    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5'/%3E%3C/svg%3E") center/contain no-repeat;
-    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5'/%3E%3C/svg%3E") center/contain no-repeat;
-  }
-  #header h1 {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 1.15rem; font-weight: 700;
-    letter-spacing: 0.25em;
-    color: var(--cyan);
-    text-shadow: 0 0 20px var(--cyan-glow);
-  }
-  #header .subtitle {
-    font-size: 0.65rem; letter-spacing: 0.3em;
-    color: var(--text-dim); text-transform: uppercase;
-    margin-top: -2px;
-  }
-  .header-actions { display: flex; gap: 0.5rem; align-items: center; }
-
-  /* === TOGGLE BUTTON === */
-  .toggle-btn {
-    background: var(--panel-bg);
-    border: 1px solid var(--panel-border);
-    color: var(--cyan);
-    width: 36px; height: 36px;
-    border-radius: 8px;
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.1rem;
-    transition: all 0.2s ease;
-  }
-  .toggle-btn:hover {
-    background: var(--cyan-deep);
-    border-color: var(--cyan-dim);
-    box-shadow: 0 0 12px var(--cyan-glow);
-  }
-
-  /* === SIDE PANEL (DESKTOP) === */
-  #control-panel {
-    position: fixed; top: 56px; right: 0;
-    width: 340px; bottom: 0;
-    z-index: 90;
-    background: var(--panel-bg);
-    border-left: 1px solid var(--panel-border);
-    backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
-    overflow-y: auto; overflow-x: hidden;
-    padding: 1rem 1rem 6rem 1rem;
-    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-    scrollbar-width: thin;
-    scrollbar-color: rgba(0,229,255,0.15) transparent;
-  }
-  #control-panel.collapsed { transform: translateX(100%); }
-  #control-panel::-webkit-scrollbar { width: 4px; }
-  #control-panel::-webkit-scrollbar-track { background: transparent; }
-  #control-panel::-webkit-scrollbar-thumb { background: rgba(0,229,255,0.15); border-radius: 2px; }
-
-  /* === SECTIONS === */
-  .section {
-    margin-bottom: 1.2rem;
-    background: rgba(0,229,255,0.02);
-    border: 1px solid rgba(0,229,255,0.08);
-    border-radius: 10px;
-    padding: 0.85rem;
-  }
-  .section-header {
-    display: flex; align-items: center; gap: 0.5rem;
-    margin-bottom: 0.7rem;
-  }
-  .section-header .icon { font-size: 0.9rem; opacity: 0.7; }
-  .section-header h3 {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 0.65rem; font-weight: 600;
-    letter-spacing: 0.2em; text-transform: uppercase;
-    color: var(--text-secondary);
-  }
-
-  /* === CHARACTER SELECTOR === */
-  .char-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
-  .char-btn {
-    background: rgba(0,229,255,0.04);
-    border: 1px solid rgba(0,229,255,0.12);
-    border-radius: 8px;
-    padding: 0.6rem 0.4rem;
-    cursor: pointer;
-    text-align: center;
-    transition: all 0.25s ease;
-    position: relative; overflow: hidden;
-  }
-  .char-btn::before {
-    content: ''; position: absolute; inset: 0;
-    background: linear-gradient(135deg, transparent, rgba(0,229,255,0.05));
-    opacity: 0; transition: opacity 0.25s;
-  }
-  .char-btn:hover::before { opacity: 1; }
-  .char-btn:hover {
-    border-color: var(--cyan-dim);
-    box-shadow: 0 0 15px rgba(0,229,255,0.1);
-  }
-  .char-btn.active {
-    border-color: var(--cyan);
-    background: rgba(0,229,255,0.1);
-    box-shadow: 0 0 20px var(--cyan-glow), inset 0 0 20px rgba(0,229,255,0.05);
-  }
-  .char-btn .designation {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 0.55rem; letter-spacing: 0.15em;
-    color: var(--cyan-dim); display: block;
-    margin-bottom: 0.15rem;
-  }
-  .char-btn .name {
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 0.95rem; font-weight: 600;
-    color: var(--text-primary); display: block;
-  }
-  .char-btn.active .name { color: var(--cyan); }
-  .char-btn.active .designation { color: var(--cyan); }
-
-  /* === COLOR PICKERS === */
-  .color-row {
-    display: flex; align-items: center; gap: 0.6rem;
-    margin-bottom: 0.6rem;
-  }
-  .color-row:last-child { margin-bottom: 0; }
-  .color-row label {
-    font-size: 0.78rem; font-weight: 500;
-    color: var(--text-secondary); min-width: 80px;
-    letter-spacing: 0.05em;
-  }
-  .color-input-wrap {
-    position: relative; flex: 1;
-    display: flex; align-items: center; gap: 0.4rem;
-  }
-  input[type="color"] {
-    -webkit-appearance: none; appearance: none;
-    width: 36px; height: 36px;
-    border: 2px solid rgba(0,229,255,0.2);
-    border-radius: 8px;
-    cursor: pointer; background: transparent; padding: 2px;
-  }
-  input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
-  input[type="color"]::-webkit-color-swatch { border: none; border-radius: 5px; }
-  input[type="color"]:hover { border-color: var(--cyan); }
-  .hex-display {
-    font-family: 'Rajdhani', monospace;
-    font-size: 0.75rem; color: var(--text-dim);
-    letter-spacing: 0.05em;
-  }
-
-  /* === VISOR PRESETS === */
-  .visor-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem; }
-  .visor-btn {
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 8px; padding: 0.45rem 0.3rem;
-    cursor: pointer; text-align: center;
-    font-size: 0.72rem; font-weight: 600;
-    letter-spacing: 0.05em;
-    transition: all 0.2s ease;
-    position: relative; overflow: hidden;
-    color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.5);
-  }
-  .visor-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-  }
-  .visor-btn.active {
-    border-color: #fff;
-    box-shadow: 0 0 15px rgba(255,255,255,0.3);
-  }
-  .visor-btn .visor-dot {
-    width: 16px; height: 16px;
-    border-radius: 50%; margin: 0 auto 0.25rem;
-    border: 1px solid rgba(255,255,255,0.3);
-    box-shadow: 0 0 8px currentColor;
-  }
-
-  /* === PRESET THEMES === */
-  .preset-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.4rem; }
-  .preset-btn {
-    background: rgba(0,229,255,0.03);
-    border: 1px solid rgba(0,229,255,0.1);
-    border-radius: 8px; padding: 0.5rem;
-    cursor: pointer;
-    display: flex; align-items: center; gap: 0.5rem;
-    transition: all 0.2s ease;
-  }
-  .preset-btn:hover {
-    border-color: var(--cyan-dim);
-    background: rgba(0,229,255,0.06);
-  }
-  .preset-btn.active {
-    border-color: var(--cyan);
-    background: rgba(0,229,255,0.08);
-  }
-  .preset-colors { display: flex; gap: 2px; }
-  .preset-swatch {
-    width: 12px; height: 18px;
-    border-radius: 3px;
-    border: 1px solid rgba(255,255,255,0.1);
-  }
-  .preset-btn .preset-name {
-    font-size: 0.72rem; font-weight: 600;
-    color: var(--text-primary); letter-spacing: 0.03em;
-  }
-
-  /* === ACTION BUTTONS === */
-  .action-row { display: flex; gap: 0.4rem; }
-  .action-btn {
-    flex: 1;
-    background: rgba(0,229,255,0.06);
-    border: 1px solid rgba(0,229,255,0.15);
-    border-radius: 8px; padding: 0.55rem;
-    cursor: pointer;
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 0.78rem; font-weight: 600;
-    color: var(--cyan); letter-spacing: 0.08em;
-    transition: all 0.2s ease; text-transform: uppercase;
-  }
-  .action-btn:hover {
-    background: rgba(0,229,255,0.12);
-    border-color: var(--cyan);
-    box-shadow: 0 0 15px var(--cyan-glow);
-  }
-  .action-btn.danger {
-    color: var(--danger);
-    border-color: rgba(255,23,68,0.2);
-    background: rgba(255,23,68,0.04);
-  }
-  .action-btn.danger:hover {
-    background: rgba(255,23,68,0.1);
-    border-color: var(--danger);
-    box-shadow: 0 0 15px rgba(255,23,68,0.2);
-  }
-
-  /* === ATTRIBUTION === */
-  #attribution {
-    position: fixed; bottom: 0; left: 0; right: 0;
-    z-index: 95;
-    background: linear-gradient(0deg, rgba(5,8,16,0.9) 0%, transparent 100%);
-    padding: 2rem 1rem 0.6rem; text-align: center;
-    pointer-events: none;
-  }
-  #attribution a {
-    pointer-events: all;
-    color: var(--text-dim); text-decoration: none;
-    font-size: 0.65rem; letter-spacing: 0.1em;
-    transition: color 0.2s;
-  }
-  #attribution a:hover { color: var(--cyan-dim); }
-
-  /* === STATUS INDICATOR === */
-  #status-dot {
-    width: 8px; height: 8px;
-    border-radius: 50%; background: var(--text-dim);
-    transition: background 0.3s; flex-shrink: 0;
-  }
-  #status-dot.connected { background: var(--success); box-shadow: 0 0 8px rgba(0,230,118,0.4); }
-  #status-dot.error { background: var(--danger); box-shadow: 0 0 8px rgba(255,23,68,0.4); }
-
-  /* === MATERIAL LOG (debug) === */
-  #material-log {
-    font-family: monospace; font-size: 0.6rem;
-    color: var(--text-dim);
-    max-height: 100px; overflow-y: auto;
-    white-space: pre-wrap; word-break: break-all;
-    background: rgba(0,0,0,0.3); border-radius: 6px;
-    padding: 0.5rem; display: none;
-  }
-  #material-log.visible { display: block; }
-
-  /* === MOBILE RESPONSIVE === */
-  @media (max-width: 768px) {
-    #control-panel {
-      top: auto; bottom: 0; left: 0; right: 0;
-      width: 100%; height: 55vh;
-      border-left: none;
-      border-top: 1px solid var(--panel-border);
-      border-radius: 16px 16px 0 0;
-      padding: 0.8rem 0.8rem 5rem 0.8rem;
-    }
-    #control-panel.collapsed { transform: translateY(100%); }
-    #header h1 { font-size: 0.95rem; letter-spacing: 0.15em; }
-    #header .subtitle { display: none; }
-    .char-grid { grid-template-columns: repeat(4, 1fr); }
-    #control-panel::before {
-      content: ''; display: block;
-      width: 40px; height: 4px;
-      background: rgba(0,229,255,0.3);
-      border-radius: 2px; margin: 0 auto 0.8rem;
-    }
-  }
-  @media (max-width: 400px) {
-    .char-grid { grid-template-columns: repeat(2, 1fr); }
-  }
-
-  /* === SCANLINE EFFECT === */
-  #scanlines {
-    position: fixed; inset: 0; z-index: 99;
-    pointer-events: none;
-    background: repeating-linear-gradient(
-      0deg, transparent, transparent 2px,
-      rgba(0,0,0,0.015) 2px, rgba(0,0,0,0.015) 4px
-    );
-    opacity: 0.5;
-  }
-
-  @keyframes borderPulse {
-    0%, 100% { border-color: var(--cyan); }
-    50% { border-color: rgba(0,229,255,0.5); }
-  }
-  .char-btn.active { animation: borderPulse 2s ease-in-out infinite; }
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0a1a;--bg2:#111128;--accent:#00d4ff;--accent2:#0088aa;
+  --text:#e0e0e0;--panel:rgba(0,212,255,0.06);--border:rgba(0,212,255,0.25);
+  --btn-bg:rgba(0,212,255,0.12);--btn-hover:rgba(0,212,255,0.25);
+  --shadow:0 0 20px rgba(0,212,255,0.15);--glow:0 0 30px rgba(0,212,255,0.3);
+}
+[data-theme="peppa"]{
+  --bg:#fff0f5;--bg2:#ffe8f0;--accent:#ff69b4;--accent2:#ff1493;
+  --text:#5a2040;--panel:rgba(255,105,180,0.06);--border:rgba(255,105,180,0.25);
+  --btn-bg:rgba(255,105,180,0.12);--btn-hover:rgba(255,105,180,0.25);
+  --shadow:0 0 20px rgba(255,105,180,0.15);--glow:0 0 30px rgba(255,105,180,0.3);
+}
+[data-theme="bluey"]{
+  --bg:#e6f2fd;--bg2:#d0e8f8;--accent:#4a90d9;--accent2:#f09030;
+  --text:#1a3a5c;--panel:rgba(74,144,217,0.06);--border:rgba(74,144,217,0.25);
+  --btn-bg:rgba(74,144,217,0.12);--btn-hover:rgba(74,144,217,0.25);
+  --shadow:0 0 20px rgba(74,144,217,0.15);--glow:0 0 30px rgba(74,144,217,0.3);
+}
+[data-theme="rachel"]{
+  --bg:#fffef2;--bg2:#fff5d6;--accent:#ff6b35;--accent2:#e74c3c;
+  --text:#2c1810;--panel:rgba(255,107,53,0.06);--border:rgba(255,107,53,0.25);
+  --btn-bg:rgba(255,107,53,0.12);--btn-hover:rgba(255,107,53,0.25);
+  --shadow:0 0 20px rgba(255,107,53,0.15);--glow:0 0 30px rgba(255,107,53,0.3);
+}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  background:var(--bg);color:var(--text);min-height:100vh;
+  transition:background .5s,color .5s;
+}
+.title-bar{text-align:center;padding:14px 10px 8px;background:var(--bg2);border-bottom:1px solid var(--border)}
+.title-bar h1{font-size:22px;color:var(--accent);letter-spacing:3px;font-weight:900}
+.title-bar .sub{font-size:11px;opacity:.5;margin-top:3px;letter-spacing:1px}
+.header{display:flex;justify-content:center;gap:8px;padding:12px 10px;background:var(--bg2);border-bottom:2px solid var(--border);flex-wrap:wrap}
+.mode-btn{
+  padding:11px 22px;border:2px solid var(--border);background:var(--btn-bg);
+  color:var(--text);font-size:15px;font-weight:700;border-radius:12px;
+  cursor:pointer;transition:all .25s;display:flex;align-items:center;gap:8px;
+  user-select:none;
+}
+.mode-btn:hover{background:var(--btn-hover);transform:translateY(-2px);box-shadow:var(--shadow)}
+.mode-btn.active{background:var(--accent);color:#fff;border-color:var(--accent);box-shadow:var(--glow)}
+[data-theme="spartan"] .mode-btn.active,[data-theme="bluey"] .mode-btn.active{color:#000}
+.mi{font-size:22px}
+.main{display:flex;flex-direction:column;align-items:center;padding:20px;gap:20px;max-width:1100px;margin:0 auto}
+@media(min-width:800px){.main{flex-direction:row;align-items:flex-start}}
+.viewport{
+  flex:1.2;min-width:300px;max-width:520px;width:100%;
+  background:var(--panel);border:2px solid var(--border);border-radius:16px;
+  padding:20px;display:flex;flex-direction:column;align-items:center;
+  position:relative;overflow:visible;transition:background .4s;
+}
+.viewport svg{width:100%;max-height:520px;transition:opacity .3s}
+.fun-btn{
+  margin-top:14px;padding:11px 24px;background:var(--accent);color:#fff;
+  border:none;border-radius:25px;font-size:14px;font-weight:700;
+  cursor:pointer;transition:all .25s;letter-spacing:1px;
+}
+.fun-btn:hover{transform:scale(1.06);box-shadow:var(--glow)}
+[data-theme="spartan"] .fun-btn{color:#000}
+.controls{
+  flex:1;min-width:260px;max-width:380px;width:100%;
+  background:var(--panel);border:2px solid var(--border);border-radius:16px;padding:20px;
+  transition:background .4s;max-height:80vh;overflow-y:auto;
+}
+.cg{margin-bottom:16px}
+.cg label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--accent);margin-bottom:8px}
+.og{display:flex;flex-wrap:wrap;gap:5px}
+.ob{
+  padding:7px 13px;border:2px solid var(--border);background:var(--btn-bg);
+  color:var(--text);font-size:12px;font-weight:600;border-radius:8px;
+  cursor:pointer;transition:all .2s;
+}
+.ob:hover{background:var(--btn-hover)}
+.ob.sel{background:var(--accent);color:#fff;border-color:var(--accent)}
+[data-theme="spartan"] .ob.sel{color:#000}
+.cr{display:flex;gap:10px;align-items:center;margin-bottom:6px}
+.cr input[type="color"]{width:42px;height:32px;border:2px solid var(--border);border-radius:6px;cursor:pointer;background:transparent;padding:2px}
+.cr span{font-size:12px;font-weight:600}
+.xover-btn{
+  display:block;width:100%;margin-top:18px;padding:14px;
+  background:linear-gradient(135deg,#00d4ff,#ff69b4,#4a90d9,#ff6b35);
+  background-size:300% 300%;animation:rbw 4s ease infinite;
+  color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:800;
+  cursor:pointer;letter-spacing:2px;text-shadow:0 1px 3px rgba(0,0,0,.3);
+  transition:transform .2s;
+}
+.xover-btn:hover{transform:scale(1.03)}
+@keyframes rbw{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+.speech-bubble{
+  position:absolute;background:#fff;color:#333;padding:10px 18px;
+  border-radius:20px;font-size:15px;font-weight:800;
+  box-shadow:0 4px 15px rgba(0,0,0,.15);animation:bpop .4s ease;
+  pointer-events:none;z-index:10;max-width:280px;text-align:center;
+}
+.speech-bubble::after{content:'';position:absolute;bottom:-10px;left:50%;margin-left:-8px;border:10px solid transparent;border-top-color:#fff}
+@keyframes bpop{0%{transform:scale(0) translateX(-50%);opacity:0}60%{transform:scale(1.15) translateX(-50%)}100%{transform:scale(1) translateX(-50%);opacity:1}}
+@keyframes forReal{0%{transform:rotate(0deg) scale(1)}25%{transform:rotate(-5deg) scale(1.05)}50%{transform:rotate(5deg) scale(1.1)}75%{transform:rotate(-3deg) scale(1.05)}100%{transform:rotate(0deg) scale(1)}}
+.shake{animation:forReal .6s ease}
+@media(max-width:799px){
+  .mode-btn{padding:9px 14px;font-size:13px}
+  .mi{font-size:18px}
+  .viewport,.controls{min-width:280px;max-width:100%}
+}
 </style>
 </head>
-<body>
-
-<!-- Loading Overlay -->
-<div id="loading-overlay">
-  <div class="logo-text">MJOLNIR FORGE</div>
-  <div class="loader-bar"></div>
-  <div id="loading-status">INITIALIZING VIEWER...</div>
+<body data-theme="spartan">
+<div class="title-bar">
+  <h1>⚒️ MJOLNIR FORGE v5</h1>
+  <div class="sub">Multi-Universe Character Customizer — For Dads Who Game</div>
 </div>
-
-<!-- Scanline overlay -->
-<div id="scanlines"></div>
-
-<!-- 3D Viewport -->
-<iframe
-  id="api-frame"
-  
-  allow="autoplay; fullscreen; xr-spatial-tracking"
-  allowfullscreen>
-</iframe>
-
-<!-- Header -->
-<div id="header">
-  <div class="title-group">
-    <div class="forge-icon"></div>
-    <div>
-      <h1>MJOLNIR FORGE</h1>
-      <div class="subtitle">GEN-2 ARMOR CUSTOMIZATION SYSTEM</div>
-    </div>
-  </div>
-  <div class="header-actions">
-    <div id="status-dot" title="Viewer status"></div>
-    <button class="toggle-btn" id="toggle-panel" title="Toggle controls">&#9881;</button>
-  </div>
+<div class="header" id="modeBar"></div>
+<div class="main">
+  <div class="viewport" id="viewport"></div>
+  <div class="controls" id="controls"></div>
 </div>
-
-<!-- Control Panel -->
-<div id="control-panel">
-
-  <!-- Character Selector -->
-  <div class="section">
-    <div class="section-header">
-      <span class="icon">&#128100;</span>
-      <h3>Spartan Select</h3>
-    </div>
-    <div class="char-grid" id="char-grid">
-      <button class="char-btn active" data-spartan="masterchief">
-        <span class="designation">SIERRA-117</span>
-        <span class="name">Master Chief</span>
-      </button>
-      <button class="char-btn" data-spartan="fred">
-        <span class="designation">SIERRA-104</span>
-        <span class="name">Fred</span>
-      </button>
-      <button class="char-btn" data-spartan="kelly">
-        <span class="designation">SIERRA-087</span>
-        <span class="name">Kelly</span>
-      </button>
-      <button class="char-btn" data-spartan="linda">
-        <span class="designation">SIERRA-058</span>
-        <span class="name">Linda</span>
-      </button>
-    </div>
-  </div>
-
-  <!-- Armor Colors -->
-  <div class="section">
-    <div class="section-header">
-      <span class="icon">&#127912;</span>
-      <h3>Armor Colors</h3>
-    </div>
-    <div class="color-row">
-      <label>Primary</label>
-      <div class="color-input-wrap">
-        <input type="color" id="color-primary" value="#4a7c2e">
-        <span class="hex-display" id="hex-primary">#4A7C2E</span>
-      </div>
-    </div>
-    <div class="color-row">
-      <label>Secondary</label>
-      <div class="color-input-wrap">
-        <input type="color" id="color-secondary" value="#2e4a1e">
-        <span class="hex-display" id="hex-secondary">#2E4A1E</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Visor Color -->
-  <div class="section">
-    <div class="section-header">
-      <span class="icon">&#128302;</span>
-      <h3>Visor</h3>
-    </div>
-    <div class="visor-grid" id="visor-grid">
-      <button class="visor-btn active" data-color="#ffd54f" data-name="Gold" style="background:linear-gradient(135deg,#b8860b,#ffd54f)">
-        <div class="visor-dot" style="background:#ffd54f;color:#ffd54f"></div>
-        Gold
-      </button>
-      <button class="visor-btn" data-color="#42a5f5" data-name="Blue" style="background:linear-gradient(135deg,#1565c0,#42a5f5)">
-        <div class="visor-dot" style="background:#42a5f5;color:#42a5f5"></div>
-        Blue
-      </button>
-      <button class="visor-btn" data-color="#bdbdbd" data-name="Silver" style="background:linear-gradient(135deg,#616161,#bdbdbd)">
-        <div class="visor-dot" style="background:#bdbdbd;color:#bdbdbd"></div>
-        Silver
-      </button>
-      <button class="visor-btn" data-color="#ef5350" data-name="Red" style="background:linear-gradient(135deg,#b71c1c,#ef5350)">
-        <div class="visor-dot" style="background:#ef5350;color:#ef5350"></div>
-        Red
-      </button>
-      <button class="visor-btn" data-color="#66bb6a" data-name="Green" style="background:linear-gradient(135deg,#2e7d32,#66bb6a)">
-        <div class="visor-dot" style="background:#66bb6a;color:#66bb6a"></div>
-        Green
-      </button>
-      <button class="visor-btn" data-color="#ab47bc" data-name="Purple" style="background:linear-gradient(135deg,#6a1b9a,#ab47bc)">
-        <div class="visor-dot" style="background:#ab47bc;color:#ab47bc"></div>
-        Purple
-      </button>
-    </div>
-  </div>
-
-  <!-- Preset Themes -->
-  <div class="section">
-    <div class="section-header">
-      <span class="icon">&#9876;</span>
-      <h3>Noble Team Presets</h3>
-    </div>
-    <div class="preset-grid" id="preset-grid"></div>
-  </div>
-
-  <!-- Actions -->
-  <div class="section">
-    <div class="section-header">
-      <span class="icon">&#9889;</span>
-      <h3>Actions</h3>
-    </div>
-    <div class="action-row">
-      <button class="action-btn" id="btn-random">&#127922; Random</button>
-      <button class="action-btn danger" id="btn-reset">&#8634; Reset</button>
-    </div>
-  </div>
-
-  <!-- Debug: Material Log -->
-  <div class="section">
-    <div class="section-header" style="cursor:pointer" id="debug-toggle">
-      <span class="icon">&#128295;</span>
-      <h3>Material Debug</h3>
-    </div>
-    <div id="material-log"></div>
-  </div>
-
-</div>
-
-<!-- Attribution -->
-<div id="attribution">
-  <a href="https://sketchfab.com/3d-models/charactershalo-5spartansblue-team-c727e95065fc40b999cdfdc6ca4dc394" target="_blank" rel="noopener">
-    3D Model by jameslucino117 &mdash; CC BY 4.0
-  </a>
-</div>
-
-<!-- Sketchfab Viewer API -->
-<script src="https://static.sketchfab.com/api/sketchfab-viewer-1.12.1.js"></script>
 
 <script>
-(function() {
-  'use strict';
+const S={
+  mode:'spartan',
+  spartan:{helmet:'mark-vi',chest:'standard',shoulder:'standard',primary:'#5B7744',secondary:'#3D4F2F',visor:'#F4A500'},
+  peppa:{dress:'#CC0000',accessory:'none',bg:'puddle'},
+  bluey:{character:'bluey',outfit:'default',accessory:'none'},
+  rachel:{outfit:'#FF6B35',accessory:'none',bg:'classroom'},
+  crossover:null
+};
 
-  // ========== STATE ==========
-  var state = {
-    api: null,
-    materials: [],
-    nodeMap: null,
-    activeSpartan: 'masterchief',
-    primaryColor: '#4a7c2e',
-    secondaryColor: '#2e4a1e',
-    visorColor: '#ffd54f',
-    panelOpen: true,
-    materialMap: {},
-    nodeGroups: {},
-    defaultMaterials: {},
+function hex2rgb(h){const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);return{r,g,b}}
+function rgb2hex(r,g,b){return'#'+[r,g,b].map(x=>Math.max(0,Math.min(255,Math.round(x))).toString(16).padStart(2,'0')).join('')}
+function lighten(h,p){const c=hex2rgb(h);return rgb2hex(c.r+(255-c.r)*p/100,c.g+(255-c.g)*p/100,c.b+(255-c.b)*p/100)}
+function darken(h,p){const c=hex2rgb(h);return rgb2hex(c.r*(1-p/100),c.g*(1-p/100),c.b*(1-p/100))}
+
+const MODES=[
+  {id:'spartan',icon:'⚔️',label:'SPARTAN'},
+  {id:'peppa',icon:'🐷',label:'PEPPA'},
+  {id:'bluey',icon:'🐶',label:'BLUEY'},
+  {id:'rachel',icon:'👩‍🏫',label:'MISS RACHEL'}
+];
+function renderModeBar(){
+  document.getElementById('modeBar').innerHTML=MODES.map(m=>
+    '<button class="mode-btn'+(S.mode===m.id?' active':'')+'" onclick="setMode(\''+m.id+'\')"><span class="mi">'+m.icon+'</span>'+m.label+'</button>'
+  ).join('');
+}
+
+function setMode(m){
+  S.mode=m;S.crossover=null;
+  document.body.dataset.theme=m;
+  renderModeBar();render();renderControls();saveURL();
+}
+
+function saveURL(){try{history.replaceState(null,'','#'+btoa(JSON.stringify(S)))}catch(e){}}
+function loadURL(){if(location.hash.length>1){try{Object.assign(S,JSON.parse(atob(location.hash.slice(1))))}catch(e){}}}
+
+function svgFilters(){return '<defs>'+
+  '<filter id="metallic" x="-5%" y="-5%" width="110%" height="110%">'+
+    '<feGaussianBlur in="SourceAlpha" stdDeviation="1.5" result="a"/>'+
+    '<feSpecularLighting in="a" surfaceScale="4" specularConstant="0.6" specularExponent="25" result="s">'+
+      '<fePointLight x="250" y="50" z="300"/>'+
+    '</feSpecularLighting>'+
+    '<feComposite in="s" in2="SourceAlpha" operator="in" result="s2"/>'+
+    '<feComposite in="SourceGraphic" in2="s2" operator="arithmetic" k1="0" k2="1" k3=".4" k4="0"/>'+
+  '</filter>'+
+  '<filter id="vglow" x="-30%" y="-30%" width="160%" height="160%">'+
+    '<feGaussianBlur in="SourceGraphic" stdDeviation="5" result="b"/>'+
+    '<feColorMatrix in="b" type="saturate" values="3" result="s"/>'+
+    '<feMerge><feMergeNode in="s"/><feMergeNode in="s"/><feMergeNode in="SourceGraphic"/></feMerge>'+
+  '</filter>'+
+  '<filter id="softShadow" x="-10%" y="-10%" width="120%" height="120%">'+
+    '<feDropShadow dx="2" dy="3" stdDeviation="3" flood-opacity=".15"/>'+
+  '</filter>'+
+'</defs>'}
+
+// ═══════════ SPARTAN ═══════════
+function renderSpartan(){
+  var h=S.spartan.helmet,ch=S.spartan.chest,sh=S.spartan.shoulder;
+  var pc=S.spartan.primary,sc=S.spartan.secondary,vc=S.spartan.visor;
+  var pcL=lighten(pc,15),pcD=darken(pc,20),scD=darken(sc,15);
+  var cross=S.crossover;
+  return '<svg viewBox="0 0 400 620" xmlns="http://www.w3.org/2000/svg">'+
+svgFilters()+
+'<defs>'+
+  '<linearGradient id="ag" x1="0" y1="0" x2=".3" y2="1">'+
+    '<stop offset="0%" stop-color="'+pcL+'"/><stop offset="50%" stop-color="'+pc+'"/><stop offset="100%" stop-color="'+pcD+'"/>'+
+  '</linearGradient>'+
+  '<linearGradient id="ag2" x1="0" y1="0" x2=".3" y2="1">'+
+    '<stop offset="0%" stop-color="'+lighten(sc,10)+'"/><stop offset="50%" stop-color="'+sc+'"/><stop offset="100%" stop-color="'+scD+'"/>'+
+  '</linearGradient>'+
+  '<linearGradient id="vg" x1="0" y1="0" x2="0" y2="1">'+
+    '<stop offset="0%" stop-color="'+lighten(vc,40)+'"/><stop offset="40%" stop-color="'+vc+'"/><stop offset="100%" stop-color="'+darken(vc,30)+'"/>'+
+  '</linearGradient>'+
+'</defs>'+
+
+'<g fill="url(#ag2)">'+
+  '<path d="M 178,148 L 222,148 L 225,170 L 175,170 Z"/>'+
+  '<rect x="130" y="185" width="14" height="100" rx="5"/>'+
+  '<rect x="256" y="185" width="14" height="100" rx="5"/>'+
+  '<path d="M 155,320 L 245,320 L 250,345 L 150,345 Z"/>'+
+  '<rect x="185" y="350" width="30" height="60" rx="4"/>'+
+'</g>'+
+
+'<g filter="url(#metallic)">'+
+  '<path d="M 152,340 C 148,345 140,360 138,400 L 138,430 C 138,435 142,438 155,440 L 180,440 C 188,438 192,435 192,430 L 192,360 C 192,350 188,345 182,342 Z" fill="url(#ag)"/>'+
+  '<path d="M 248,340 C 252,345 260,360 262,400 L 262,430 C 262,435 258,438 245,440 L 220,440 C 212,438 208,435 208,430 L 208,360 C 208,350 212,345 218,342 Z" fill="url(#ag)"/>'+
+  '<path d="M 135,442 C 132,450 128,480 126,520 L 126,550 C 126,558 132,562 150,564 L 178,564 C 190,562 194,558 194,550 L 194,480 C 194,460 192,448 190,442 Z" fill="url(#ag)"/>'+
+  '<path d="M 265,442 C 268,450 272,480 274,520 L 274,550 C 274,558 268,562 250,564 L 222,564 C 210,562 206,558 206,550 L 206,480 C 206,460 208,448 210,442 Z" fill="url(#ag)"/>'+
+  '<path d="M 122,556 L 196,556 L 198,580 L 200,595 C 200,600 195,605 180,605 L 125,605 C 115,605 112,600 112,595 L 112,580 C 112,568 115,560 122,556 Z" fill="'+pcD+'"/>'+
+  '<path d="M 204,556 L 278,556 L 280,580 L 282,595 C 282,600 277,605 262,605 L 210,605 C 200,605 198,600 198,595 L 198,580 C 198,568 202,560 204,556 Z" fill="'+pcD+'"/>'+
+  '<ellipse cx="162" cy="442" rx="22" ry="14" fill="'+pcL+'"/>'+
+  '<ellipse cx="238" cy="442" rx="22" ry="14" fill="'+pcL+'"/>'+
+  '<path d="M 152,370 L 182,370" stroke="'+pcD+'" stroke-width="2" fill="none"/>'+
+  '<path d="M 218,370 L 248,370" stroke="'+pcD+'" stroke-width="2" fill="none"/>'+
+  '<path d="M 150,395 L 185,395" stroke="'+pcD+'" stroke-width="2" fill="none"/>'+
+  '<path d="M 215,395 L 250,395" stroke="'+pcD+'" stroke-width="2" fill="none"/>'+
+'</g>'+
+
+'<path d="M 148,330 L 252,330 L 258,348 C 258,355 240,360 200,362 C 160,360 142,355 142,348 Z" fill="'+pcD+'" filter="url(#metallic)"/>'+
+'<path d="M 175,332 L 225,332 L 222,355 C 215,358 200,360 200,360 C 200,360 185,358 178,355 Z" fill="'+sc+'" opacity=".6"/>'+
+
+'<path d="M 145,168 C 135,172 125,178 120,190 L 115,260 C 115,290 125,320 140,330 L 155,336 L 200,340 L 245,336 L 260,330 C 275,320 285,290 285,260 L 280,190 C 275,178 265,172 255,168 Z" fill="url(#ag)" filter="url(#metallic)"/>'+
+
+spartanChest(ch,pc,sc,pcD,pcL)+
+
+'<g filter="url(#metallic)">'+
+  '<path d="M 120,188 C 112,195 105,210 100,240 L 95,285 C 95,292 100,296 110,298 L 128,298 C 135,296 140,292 140,285 L 140,210 C 140,198 135,192 130,188 Z" fill="url(#ag)"/>'+
+  '<path d="M 280,188 C 288,195 295,210 300,240 L 305,285 C 305,292 300,296 290,298 L 272,298 C 265,296 260,292 260,285 L 260,210 C 260,198 265,192 270,188 Z" fill="url(#ag)"/>'+
+  '<path d="M 92,300 C 88,310 82,340 78,370 L 76,400 C 76,408 82,412 95,414 L 118,414 C 128,412 134,408 134,400 L 136,340 C 136,320 134,308 132,300 Z" fill="url(#ag)"/>'+
+  '<path d="M 308,300 C 312,310 318,340 322,370 L 324,400 C 324,408 318,412 305,414 L 282,414 C 272,412 266,408 266,400 L 264,340 C 264,320 266,308 268,300 Z" fill="url(#ag)"/>'+
+  '<path d="M 74,410 L 130,410 L 132,432 C 132,440 124,445 102,445 L 82,445 C 72,445 68,440 68,432 Z" fill="'+scD+'"/>'+
+  '<path d="M 270,410 L 326,410 L 328,432 C 328,440 320,445 298,445 L 278,445 C 268,445 264,440 264,432 Z" fill="'+scD+'"/>'+
+  '<ellipse cx="112" cy="300" rx="18" ry="12" fill="'+pcL+'"/>'+
+  '<ellipse cx="288" cy="300" rx="18" ry="12" fill="'+pcL+'"/>'+
+'</g>'+
+
+spartanShoulders(sh,pc,sc,pcL,pcD)+
+spartanHelmet(h,pc,sc,vc,pcL,pcD)+
+
+(cross==='peppa-tail'?'<path d="M 310,300 C 320,280 340,260 335,240 C 330,220 340,210 338,195" stroke="#FFB6C1" stroke-width="6" fill="none" stroke-linecap="round"/>':
+ cross==='bluey-ears'?'<ellipse cx="140" cy="60" rx="22" ry="45" fill="#5BA4CF" transform="rotate(-15 140 60)"/><ellipse cx="260" cy="60" rx="22" ry="45" fill="#5BA4CF" transform="rotate(15 260 60)"/>':
+ cross==='rachel-mic'?'<g transform="translate(315,350)"><rect x="-5" y="-40" width="10" height="45" rx="4" fill="#333"/><circle cx="0" cy="-45" r="12" fill="#555"/><circle cx="0" cy="-45" r="8" fill="#888"/></g>':'')+
+
+'</svg>'+
+'<button class="fun-btn" onclick="spartanQuip()">⚔️ "FINISHING THIS FIGHT"</button>';
+}
+
+function spartanChest(type,pc,sc,pcD,pcL){
+  var base='<path d="M 165,190 L 200,185 L 235,190 L 238,250 L 235,290 C 225,300 200,305 200,305 C 200,305 175,300 165,290 L 162,250 Z" fill="'+pcL+'" opacity=".35"/>';
+  if(type==='tactical')return base+
+    '<path d="M 180,200 L 200,195 L 220,200 L 222,240 L 200,245 L 178,240 Z" fill="'+pcD+'" opacity=".5"/>'+
+    '<line x1="200" y1="195" x2="200" y2="290" stroke="'+pcD+'" stroke-width="2"/>'+
+    '<line x1="170" y1="230" x2="230" y2="230" stroke="'+pcD+'" stroke-width="1.5"/>'+
+    '<line x1="172" y1="260" x2="228" y2="260" stroke="'+pcD+'" stroke-width="1.5"/>'+
+    '<circle cx="200" cy="215" r="8" fill="'+sc+'" opacity=".4"/>';
+  if(type==='commando')return base+
+    '<path d="M 175,200 L 225,200 L 230,260 L 200,280 L 170,260 Z" fill="'+pcD+'" opacity=".4"/>'+
+    '<path d="M 190,205 L 210,205 L 212,250 L 200,260 L 188,250 Z" fill="'+sc+'" opacity=".5"/>'+
+    '<circle cx="200" cy="225" r="6" fill="'+pcL+'" opacity=".6"/>'+
+    '<line x1="175" y1="240" x2="190" y2="240" stroke="'+pcD+'" stroke-width="2"/>'+
+    '<line x1="210" y1="240" x2="225" y2="240" stroke="'+pcD+'" stroke-width="2"/>';
+  if(type==='heavy')return base+
+    '<path d="M 158,195 L 200,188 L 242,195 L 245,270 L 200,295 L 155,270 Z" fill="'+pcD+'" opacity=".45"/>'+
+    '<rect x="185" y="200" width="30" height="60" rx="4" fill="'+sc+'" opacity=".4"/>'+
+    '<rect x="165" y="210" width="15" height="40" rx="3" fill="'+sc+'" opacity=".3"/>'+
+    '<rect x="220" y="210" width="15" height="40" rx="3" fill="'+sc+'" opacity=".3"/>'+
+    '<path d="M 180,275 L 200,285 L 220,275" stroke="'+pcL+'" stroke-width="2" fill="none"/>';
+  return base+
+    '<line x1="200" y1="195" x2="200" y2="295" stroke="'+pcD+'" stroke-width="2.5" opacity=".5"/>'+
+    '<path d="M 175,220 L 200,210 L 225,220" stroke="'+pcD+'" stroke-width="2" fill="none" opacity=".5"/>'+
+    '<circle cx="200" cy="250" r="5" fill="'+sc+'" opacity=".4"/>';
+}
+
+function spartanShoulders(type,pc,sc,pcL,pcD){
+  var baseL='<path d="M 140,170 C 125,165 95,168 85,178 L 82,205 C 84,215 95,220 115,218 L 140,210 Z" fill="url(#ag)" filter="url(#metallic)"/>';
+  var baseR='<path d="M 260,170 C 275,165 305,168 315,178 L 318,205 C 316,215 305,220 285,218 L 260,210 Z" fill="url(#ag)" filter="url(#metallic)"/>';
+  if(type==='gungnir')return baseL+baseR+
+    '<rect x="80" y="178" width="50" height="8" rx="3" fill="'+pcD+'"/>'+
+    '<rect x="270" y="178" width="50" height="8" rx="3" fill="'+pcD+'"/>'+
+    '<rect x="85" y="192" width="42" height="8" rx="3" fill="'+pcD+'"/>'+
+    '<rect x="273" y="192" width="42" height="8" rx="3" fill="'+pcD+'"/>';
+  if(type==='security')return(
+    '<path d="M 140,170 C 118,162 80,165 70,180 L 65,215 C 65,228 78,235 100,232 L 140,218 Z" fill="url(#ag)" filter="url(#metallic)"/>'+
+    '<path d="M 260,170 C 282,162 320,165 330,180 L 335,215 C 335,228 322,235 300,232 L 260,218 Z" fill="url(#ag)" filter="url(#metallic)"/>'+
+    '<circle cx="100" cy="195" r="10" fill="'+pcD+'" opacity=".5"/>'+
+    '<circle cx="300" cy="195" r="10" fill="'+pcD+'" opacity=".5"/>');
+  if(type==='hayabusa')return baseL+baseR+
+    '<path d="M 82,175 L 70,190 L 85,205" stroke="'+pcL+'" stroke-width="3" fill="none"/>'+
+    '<path d="M 318,175 L 330,190 L 315,205" stroke="'+pcL+'" stroke-width="3" fill="none"/>'+
+    '<path d="M 90,185 L 78,198" stroke="'+pcL+'" stroke-width="2" fill="none"/>'+
+    '<path d="M 310,185 L 322,198" stroke="'+pcL+'" stroke-width="2" fill="none"/>';
+  return baseL+baseR+
+    '<path d="M 88,188 L 110,188" stroke="'+pcD+'" stroke-width="2"/>'+
+    '<path d="M 290,188 L 312,188" stroke="'+pcD+'" stroke-width="2"/>';
+}
+
+function spartanHelmet(type,pc,sc,vc,pcL,pcD){
+  var sh=function(d){return '<path d="'+d+'" fill="url(#ag)" filter="url(#metallic)"/>'};
+  var vi=function(d){return '<path d="'+d+'" fill="url(#vg)" filter="url(#vglow)"/>'};
+  if(type==='mark-v')
+    return sh('M 158,140 C 155,130 152,105 155,80 C 158,60 172,42 200,38 C 228,42 242,60 245,80 C 248,105 245,130 242,140 L 238,150 C 230,156 215,160 200,160 C 185,160 170,156 162,150 Z')+
+      '<path d="M 165,128 L 235,128 L 238,148 C 230,154 215,158 200,158 C 185,158 170,154 162,148 Z" fill="'+pcD+'" opacity=".6"/>'+
+      vi('M 168,88 C 170,80 182,74 200,72 C 218,74 230,80 232,88 L 230,108 C 228,114 218,118 200,120 C 182,118 172,114 170,108 Z')+
+      '<line x1="200" y1="72" x2="200" y2="120" stroke="'+darken(vc,30)+'" stroke-width="1.5" opacity=".4"/>';
+  if(type==='eva')
+    return sh('M 155,142 C 148,130 145,100 148,75 C 152,52 170,38 200,35 C 230,38 248,52 252,75 C 255,100 252,130 245,142 L 240,152 C 232,158 218,162 200,162 C 182,162 168,158 160,152 Z')+
+      vi('M 162,70 C 165,55 180,45 200,43 C 220,45 235,55 238,70 L 240,115 C 238,130 222,140 200,142 C 178,140 162,130 160,115 Z')+
+      '<ellipse cx="200" cy="95" rx="35" ry="40" fill="none" stroke="'+lighten(vc,30)+'" stroke-width="1" opacity=".3"/>';
+  if(type==='recon')
+    return sh('M 160,140 C 156,128 154,100 158,78 C 162,58 175,42 200,38 C 225,42 238,58 242,78 C 246,100 244,128 240,140 L 235,150 C 228,156 216,160 200,160 C 184,160 172,156 165,150 Z')+
+      '<path d="M 163,95 L 200,88 L 237,95 L 235,100 L 200,93 L 165,100 Z" fill="'+pcD+'"/>'+
+      vi('M 168,98 C 172,94 185,90 200,88 C 215,90 228,94 232,98 L 230,115 C 226,120 215,124 200,125 C 185,124 174,120 170,115 Z')+
+      '<path d="M 170,82 L 200,75 L 230,82" stroke="'+pcD+'" stroke-width="3" fill="none"/>'+
+      '<path d="M 165,130 L 200,138 L 235,130" stroke="'+pcD+'" stroke-width="2" fill="none"/>';
+  if(type==='odst')
+    return sh('M 158,142 C 155,132 153,108 155,82 C 158,60 172,45 200,42 C 228,45 242,60 245,82 C 247,108 245,132 242,142 L 240,152 C 232,158 218,162 200,162 C 182,162 168,158 160,152 Z')+
+      '<rect x="162" y="70" width="76" height="10" rx="3" fill="'+pcD+'"/>'+
+      '<path d="M 165,130 L 235,130 L 238,150 C 230,156 215,160 200,160 C 185,160 170,156 162,150 Z" fill="'+pcD+'" opacity=".5"/>'+
+      vi('M 165,82 L 235,82 L 234,108 L 166,108 Z')+
+      '<line x1="200" y1="82" x2="200" y2="108" stroke="'+darken(vc,40)+'" stroke-width="2" opacity=".3"/>';
+  // mark-vi default
+  return sh('M 158,142 C 154,130 152,100 155,78 C 159,55 174,40 200,36 C 226,40 241,55 245,78 C 248,100 246,130 242,142 L 238,152 C 230,158 216,162 200,162 C 184,162 170,158 162,152 Z')+
+    '<path d="M 165,68 L 200,62 L 235,68 L 237,76 L 200,70 L 163,76 Z" fill="'+pcD+'" opacity=".6"/>'+
+    '<path d="M 166,130 L 234,130 L 237,150 C 230,156 215,160 200,160 C 185,160 170,156 163,150 Z" fill="'+pcD+'" opacity=".5"/>'+
+    vi('M 166,82 C 170,75 183,69 200,67 C 217,69 230,75 234,82 L 232,115 C 228,122 216,128 200,130 C 184,128 172,122 168,115 Z')+
+    '<path d="M 182,78 L 200,73 L 218,78" stroke="'+lighten(vc,30)+'" stroke-width="1" opacity=".5" fill="none"/>';
+}
+
+var SPARTAN_QUIPS=["I need a weapon.","Finishing this fight.","Wake me when you need me.","Don't make a girl a promise...","Were it so easy.","Thought I'd try shooting my way out.","Sir, permission to leave the station.","Tell that to the Covenant."];
+function spartanQuip(){showBubble(SPARTAN_QUIPS[Math.floor(Math.random()*SPARTAN_QUIPS.length)])}
+
+// ═══════════ PEPPA PIG ═══════════
+function renderPeppa(){
+  var dress=S.peppa.dress,acc=S.peppa.accessory,bg=S.peppa.bg;
+  var cross=S.crossover;
+  var bgScenes={
+    puddle:'<rect x="0" y="320" width="400" height="80" fill="#8B6914" rx="8"/><ellipse cx="200" cy="340" rx="120" ry="25" fill="#6B4E12"/><ellipse cx="200" cy="340" rx="100" ry="18" fill="#A08050" opacity=".5"/><rect x="0" y="350" width="400" height="50" fill="#7CB342"/>',
+    house:'<rect x="0" y="300" width="400" height="100" fill="#7CB342"/><rect x="240" y="180" width="130" height="120" fill="#FFD54F" rx="4"/><polygon points="240,180 305,130 370,180" fill="#E53935"/><rect x="280" y="230" width="30" height="40" fill="#795548"/><rect x="255" y="200" width="25" height="25" fill="#81D4FA" rx="2"/><rect x="330" y="200" width="25" height="25" fill="#81D4FA" rx="2"/>',
+    park:'<rect x="0" y="300" width="400" height="100" fill="#66BB6A"/><rect x="30" y="200" width="14" height="100" fill="#795548"/><ellipse cx="37" cy="185" rx="35" ry="40" fill="#388E3C"/><rect x="320" y="220" width="12" height="80" fill="#795548"/><ellipse cx="326" cy="208" rx="30" ry="35" fill="#43A047"/>'
   };
+  return '<svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">'+
+svgFilters()+
+'<rect width="400" height="400" fill="#87CEEB" rx="12"/>'+
+'<circle cx="340" cy="50" r="30" fill="#FFF176" opacity=".9"/>'+
+(bgScenes[bg]||bgScenes.puddle)+
 
-  // ========== NOBLE TEAM PRESETS ==========
-  var PRESETS = [
-    { name: 'Noble Six',  primary: '#5c6370', secondary: '#3b3f47', visor: '#ffd54f' },
-    { name: 'Emile',      primary: '#2d2d2d', secondary: '#1a1a1a', visor: '#ef5350' },
-    { name: 'Jorge',      primary: '#4e342e', secondary: '#3e2723', visor: '#ffd54f' },
-    { name: 'Kat',        primary: '#37474f', secondary: '#546e7a', visor: '#42a5f5' },
-    { name: 'Carter',     primary: '#455a64', secondary: '#37474f', visor: '#ffd54f' },
-    { name: 'Jun',        primary: '#2e7d32', secondary: '#1b5e20', visor: '#66bb6a' },
-  ];
+'<g transform="translate(100,60)" filter="url(#softShadow)">'+
+  '<path d="M 30,175 C 15,165 5,150 10,135 C 15,125 10,115 15,108" stroke="#F8BBD0" stroke-width="5" fill="none" stroke-linecap="round"/>'+
 
-  // ========== SPARTAN CONFIG ==========
-  var SPARTAN_KEYS = {
-    masterchief: ['masterchief', 'master_chief', 'chief', 'mc_', 'master'],
-    fred:        ['fred', 'centurion'],
-    kelly:       ['kelly', 'hermes'],
-    linda:       ['linda', 'argus'],
+  '<line x1="75" y1="245" x2="75" y2="285" stroke="#F48FB1" stroke-width="8" stroke-linecap="round"/>'+
+  '<ellipse cx="75" cy="290" rx="10" ry="5" fill="#111"/>'+
+
+  '<ellipse cx="90" cy="210" rx="55" ry="42" fill="#F8BBD0"/>'+
+
+  '<path d="M 50,205 C 50,200 65,195 90,195 C 115,195 130,200 130,205 L 135,248 C 135,255 115,260 90,260 C 65,260 45,255 45,248 Z" fill="'+dress+'"/>'+
+
+  '<line x1="105" y1="248" x2="105" y2="285" stroke="#F48FB1" stroke-width="8" stroke-linecap="round"/>'+
+  '<ellipse cx="105" cy="290" rx="10" ry="5" fill="#111"/>'+
+
+  '<line x1="65" y1="208" x2="50" y2="240" stroke="#F48FB1" stroke-width="7" stroke-linecap="round"/>'+
+
+  '<circle cx="130" cy="130" r="65" fill="#F8BBD0"/>'+
+
+  '<ellipse cx="200" cy="138" rx="28" ry="20" fill="#F8BBD0"/>'+
+  '<circle cx="212" cy="133" r="3" fill="#E91E63"/>'+
+  '<circle cx="212" cy="143" r="3" fill="#E91E63"/>'+
+  '<ellipse cx="218" cy="138" rx="12" ry="14" fill="#F48FB1" opacity=".4"/>'+
+
+  '<circle cx="155" cy="115" r="10" fill="#fff"/>'+
+  '<circle cx="158" cy="115" r="5" fill="#111"/>'+
+
+  '<circle cx="168" cy="138" r="8" fill="#F06292" opacity=".4"/>'+
+
+  '<path d="M 170,148 Q 185,158 200,148" stroke="#C2185B" stroke-width="2.5" fill="none" stroke-linecap="round"/>'+
+
+  '<ellipse cx="108" cy="68" rx="10" ry="18" fill="#F8BBD0" transform="rotate(-10 108 68)"/>'+
+  '<ellipse cx="108" cy="68" rx="5" ry="12" fill="#F48FB1" transform="rotate(-10 108 68)"/>'+
+  '<ellipse cx="135" cy="62" rx="10" ry="18" fill="#F8BBD0" transform="rotate(10 135 62)"/>'+
+  '<ellipse cx="135" cy="62" rx="5" ry="12" fill="#F48FB1" transform="rotate(10 135 62)"/>'+
+
+  '<line x1="115" y1="208" x2="135" y2="238" stroke="#F48FB1" stroke-width="7" stroke-linecap="round"/>'+
+
+  (acc==='crown'?'<polygon points="105,50 110,30 118,45 125,22 132,45 140,30 145,50" fill="#FFD700" stroke="#DAA520" stroke-width="1.5"/>':'')+
+  (acc==='hat'?'<ellipse cx="125" cy="62" rx="35" ry="8" fill="#E53935"/><path d="M 100,62 C 100,42 115,25 125,22 C 135,25 150,42 150,62" fill="#E53935"/>':'')+
+  (acc==='sunglasses'?'<path d="M 138,112 L 180,112 L 180,125 C 178,130 170,132 160,130 L 148,130 C 140,130 138,125 138,120 Z" fill="#333" opacity=".85"/><line x1="180" y1="117" x2="195" y2="115" stroke="#333" stroke-width="2.5"/>':'')+
+  (acc==='boots'?'<rect x="62" y="278" width="26" height="18" rx="6" fill="#E53935"/><rect x="92" y="278" width="26" height="18" rx="6" fill="#E53935"/>':'')+
+
+  (cross==='spartan-helmet'?
+    '<g transform="translate(130,130) scale(0.5)">'+
+      '<path d="M -42,12 C -46,0 -48,-30 -45,-52 C -41,-75 -26,-90 0,-94 C 26,-90 41,-75 45,-52 C 48,-30 46,0 42,12 L 38,22 C 30,28 16,32 0,32 C -16,32 -30,28 -38,22 Z" fill="#5B7744"/>'+
+      '<path d="M -34,-48 C -30,-55 -17,-61 0,-63 C 17,-61 30,-55 34,-48 L 32,-15 C 28,-8 16,-2 0,0 C -16,-2 -28,-8 -32,-15 Z" fill="#F4A500" filter="url(#vglow)"/>'+
+    '</g>':'')+
+
+'</g>'+
+
+'<g id="splashGroup"></g>'+
+
+'</svg>'+
+'<button class="fun-btn" onclick="jumpInPuddles()">💦 JUMP IN MUDDY PUDDLES!</button>';
+}
+
+function jumpInPuddles(){
+  var sg=document.getElementById('splashGroup');
+  if(!sg)return;
+  var drops=[];
+  for(var i=0;i<12;i++){
+    var x=140+Math.random()*120,y=310+Math.random()*20;
+    var dx=(Math.random()-.5)*60,dy=-20-Math.random()*40;
+    drops.push('<ellipse cx="'+x+'" cy="'+y+'" rx="4" ry="6" fill="#8B6914" opacity=".8">'+
+      '<animate attributeName="cx" from="'+x+'" to="'+(x+dx)+'" dur="0.7s" fill="freeze"/>'+
+      '<animate attributeName="cy" from="'+y+'" to="'+(y+dy)+'" dur="0.7s" fill="freeze"/>'+
+      '<animate attributeName="opacity" from=".8" to="0" dur="0.7s" fill="freeze"/>'+
+    '</ellipse>');
+  }
+  drops.push('<ellipse cx="200" cy="338" rx="0" ry="0" fill="#A08050" opacity=".6">'+
+    '<animate attributeName="rx" from="0" to="80" dur="0.6s" fill="freeze"/>'+
+    '<animate attributeName="ry" from="0" to="15" dur="0.6s" fill="freeze"/>'+
+    '<animate attributeName="opacity" from=".6" to="0" dur="0.6s" fill="freeze"/>'+
+  '</ellipse>');
+  sg.innerHTML=drops.join('');
+  setTimeout(function(){sg.innerHTML=''},1500);
+  showBubble("If you jump in muddy puddles, you must wear your boots!");
+}
+
+// ═══════════ BLUEY ═══════════
+function renderBluey(){
+  var character=S.bluey.character,outfit=S.bluey.outfit,acc=S.bluey.accessory;
+  var cross=S.crossover;
+  var chars={
+    bluey:{body:'#5BA4CF',dark:'#3D7EB0',belly:'#D4B896',nose:'#2C2C2C',name:'Bluey'},
+    bingo:{body:'#D4885A',dark:'#B86E3E',belly:'#F5DEB3',nose:'#2C2C2C',name:'Bingo'},
+    bandit:{body:'#4A7FB5',dark:'#36608A',belly:'#C4A882',nose:'#2C2C2C',name:'Bandit'},
+    chilli:{body:'#C4654A',dark:'#A04E38',belly:'#E8C9A0',nose:'#2C2C2C',name:'Chilli'}
   };
+  var ch=chars[character]||chars.bluey;
+  var isKid=character==='bluey'||character==='bingo';
+  var scale=isKid?1:1.05;
+  return '<svg viewBox="0 0 400 450" xmlns="http://www.w3.org/2000/svg">'+
+svgFilters()+
+'<rect width="400" height="450" fill="#87CEEB" rx="12"/>'+
+'<rect x="0" y="340" width="400" height="110" fill="#7CB342" rx="8"/>'+
+'<circle cx="50" cy="60" r="25" fill="#fff" opacity=".7"/>'+
+'<circle cx="75" cy="50" r="20" fill="#fff" opacity=".6"/>'+
+'<circle cx="60" cy="45" r="18" fill="#fff" opacity=".8"/>'+
+'<circle cx="310" cy="70" r="22" fill="#fff" opacity=".6"/>'+
+'<circle cx="335" cy="60" r="18" fill="#fff" opacity=".7"/>'+
 
-  var CLASSIFY = {
-    visor:     ['visor', 'vizor', 'glass_visor'],
-    undersuit: ['techsuit', 'undersuit', 'bodysuit', 'inner', 'cloth', 'body_suit'],
-    secondary: ['detail', 'secondary', 'accent', 'trim'],
+'<g transform="translate(200,220) scale('+scale+')" filter="url(#softShadow)">'+
+
+  '<path d="M -20,50 C -45,40 -55,20 -48,5 C -42,-8 -50,-15 -45,-22" stroke="'+ch.body+'" stroke-width="10" fill="none" stroke-linecap="round"/>'+
+
+  '<path d="M -20,80 L -25,120 L -35,122 L -30,125 L -10,125 L -8,120 L -15,80" fill="'+ch.body+'"/>'+
+
+  '<ellipse cx="0" cy="55" rx="52" ry="40" fill="'+ch.body+'"/>'+
+  '<ellipse cx="5" cy="62" rx="32" ry="25" fill="'+ch.belly+'"/>'+
+
+  (outfit==='pirate'?'<path d="M -30,30 L 30,30 L 35,70 L 25,80 L -25,80 L -35,70 Z" fill="#333" opacity=".7"/><path d="M -5,35 L 5,35 L 5,55 L -5,55 Z" fill="#fff" opacity=".5"/><line x1="-15" y1="50" x2="15" y2="50" stroke="#fff" stroke-width="2"/>':
+   outfit==='fairy'?'<path d="M -35,25 C -45,15 -50,-5 -40,-15 L -30,-10 L -42,5 Z" fill="#FFB6C1" opacity=".6"/><path d="M 35,25 C 45,15 50,-5 40,-15 L 30,-10 L 42,5 Z" fill="#FFB6C1" opacity=".6"/><path d="M -25,30 L 25,30 L 30,75 L -30,75 Z" fill="#FFB6C1" opacity=".5"/><ellipse cx="0" cy="30" rx="8" ry="3" fill="#FF69B4"/>':
+   outfit==='doctor'?'<path d="M -35,28 L 35,28 L 38,80 L -38,80 Z" fill="#fff" opacity=".8"/><circle cx="15" cy="40" r="5" fill="#E53935" opacity=".6"/><rect x="-8" y="50" width="16" height="10" rx="2" fill="#4CAF50" opacity=".4"/>':
+   outfit==='grannies'?'<path d="M -40,20 L 40,20 L 45,82 L -45,82 Z" fill="#9C27B0" opacity=".5"/><ellipse cx="0" cy="20" rx="20" ry="5" fill="#CE93D8" opacity=".6"/>':'')+
+
+  '<path d="M 15,80 L 12,120 L 2,122 L 5,125 L 25,125 L 28,120 L 22,80" fill="'+ch.body+'"/>'+
+
+  '<path d="M -38,40 L -55,65 L -52,70 L -48,68 L -35,48" fill="'+ch.body+'"/>'+
+  '<path d="M 38,40 L 55,65 L 52,70 L 48,68 L 35,48" fill="'+ch.body+'"/>'+
+
+  '<ellipse cx="2" cy="-20" rx="42" ry="38" fill="'+ch.body+'"/>'+
+  '<ellipse cx="5" cy="-5" rx="22" ry="16" fill="'+ch.belly+'"/>'+
+
+  '<path d="M -28,-48 C -35,-70 -45,-85 -52,-90 C -58,-92 -60,-85 -55,-70 C -50,-58 -42,-48 -35,-42" fill="'+ch.dark+'"/>'+
+  '<path d="M 28,-48 C 35,-70 45,-85 52,-90 C 58,-92 60,-85 55,-70 C 50,-58 42,-48 35,-42" fill="'+ch.dark+'"/>'+
+
+  '<ellipse cx="-14" cy="-25" rx="10" ry="12" fill="#fff"/>'+
+  '<ellipse cx="18" cy="-25" rx="10" ry="12" fill="#fff"/>'+
+  '<circle cx="-11" cy="-24" r="5.5" fill="#111"/>'+
+  '<circle cx="21" cy="-24" r="5.5" fill="#111"/>'+
+  '<circle cx="-9" cy="-26" r="2" fill="#fff"/>'+
+  '<circle cx="23" cy="-26" r="2" fill="#fff"/>'+
+
+  '<ellipse cx="5" cy="-8" rx="7" ry="5" fill="'+ch.nose+'"/>'+
+
+  '<path d="M -5,2 Q 5,10 15,2" stroke="#333" stroke-width="2" fill="none" stroke-linecap="round"/>'+
+
+  (character==='bluey'||character==='bandit'?
+    '<path d="M -25,-15 C -20,-20 -15,-22 -10,-18" stroke="'+ch.dark+'" stroke-width="2" fill="none" opacity=".4"/><path d="M 25,-15 C 20,-20 15,-22 10,-18" stroke="'+ch.dark+'" stroke-width="2" fill="none" opacity=".4"/>':
+   character==='bingo'?'<circle cx="-18" cy="-15" r="4" fill="'+ch.dark+'" opacity=".3"/><circle cx="22" cy="-15" r="4" fill="'+ch.dark+'" opacity=".3"/>':'')+
+
+  (acc==='cape'?'<path d="M -35,25 C -60,40 -65,90 -50,120 L 50,120 C 65,90 60,40 35,25" fill="#E53935" opacity=".7"/>':'')+
+  (acc==='crown'?'<polygon points="-18,-62 -12,-78 -4,-65 5,-82 12,-65 20,-78 25,-62" fill="#FFD700" stroke="#DAA520" stroke-width="1.5"/>':'')+
+  (acc==='wand'?'<line x1="55" y1="65" x2="72" y2="30" stroke="#DAA520" stroke-width="3"/><polygon points="72,30 65,18 72,8 79,18" fill="#FFD700"/><circle cx="72" cy="18" r="4" fill="#FFF176"/>':'')+
+
+  (cross==='spartan-chest'?'<path d="M -30,25 L 30,25 L 35,75 L 0,85 L -35,75 Z" fill="#5B7744" opacity=".8"/><path d="M -15,30 L 15,30 L 16,65 L 0,72 L -16,65 Z" fill="#3D4F2F" opacity=".6"/>':'')+
+  (cross==='peppa-dress'?'<path d="M -35,30 C -35,28 -15,25 0,25 C 15,25 35,28 35,30 L 38,80 C 38,84 15,88 0,88 C -15,88 -38,84 -38,80 Z" fill="#CC0000" opacity=".6"/>':'')+
+
+'</g>'+
+
+'</svg>'+
+'<button class="fun-btn" onclick="forRealLife()">🐶 "FOR REAL LIFE?"</button>';
+}
+
+function forRealLife(){
+  var vp=document.getElementById('viewport');
+  var svg=vp.querySelector('svg');
+  if(svg){svg.classList.add('shake');setTimeout(function(){svg.classList.remove('shake')},700)}
+  var phrases=["For real life?","This is a really good game!","Mum! Dad! Bingo!","Hooray!","I'm not tired!","But I don't WANT to!"];
+  showBubble(phrases[Math.floor(Math.random()*phrases.length)]);
+}
+
+// ═══════════ MISS RACHEL ═══════════
+function renderRachel(){
+  var outfitColor=S.rachel.outfit,acc=S.rachel.accessory,bg=S.rachel.bg;
+  var cross=S.crossover;
+  var bgScenes={
+    classroom:'<rect x="0" y="280" width="400" height="120" fill="#FFF8E1"/><rect x="20" y="180" width="140" height="100" fill="#4CAF50" rx="4"/><text x="90" y="235" text-anchor="middle" fill="#fff" font-size="16" font-weight="700">ABC 123</text><rect x="280" y="200" width="90" height="80" fill="#FFCC80" rx="4"/><rect x="290" y="210" width="30" height="25" fill="#81D4FA" rx="2"/><rect x="330" y="210" width="30" height="25" fill="#81D4FA" rx="2"/>',
+    playground:'<rect x="0" y="300" width="400" height="100" fill="#66BB6A"/><rect x="0" y="280" width="400" height="20" fill="#8D6E63"/><path d="M 300,150 L 310,150 L 310,280 L 300,280 Z" fill="#8D6E63"/><path d="M 340,180 L 350,180 L 350,280 L 340,280 Z" fill="#8D6E63"/><rect x="285" y="220" width="80" height="8" fill="#FF7043" rx="3" transform="rotate(-10 325 224)"/><rect x="30" y="250" width="60" height="30" fill="#FDD835" rx="4"/><polygon points="35,250 60,220 85,250" fill="#E53935"/>',
+    music:'<rect x="0" y="280" width="400" height="120" fill="#FFF3E0"/><rect x="20" y="300" width="50" height="70" rx="4" fill="#5D4037"/><rect x="28" y="310" width="34" height="4" fill="#D7CCC8"/><rect x="28" y="320" width="34" height="4" fill="#D7CCC8"/><rect x="28" y="330" width="34" height="4" fill="#D7CCC8"/><circle cx="330" cy="250" r="25" fill="#FDD835" opacity=".6"/><circle cx="340" cy="240" r="22" fill="#FFF176" opacity=".5"/>'
   };
+  return '<svg viewBox="0 0 400 520" xmlns="http://www.w3.org/2000/svg">'+
+svgFilters()+
+'<rect width="400" height="520" fill="#FFF8E1" rx="12"/>'+
+(bgScenes[bg]||bgScenes.classroom)+
 
-  // ========== HELPERS ==========
-  function hexToRGB01(hex) {
-    hex = hex.replace('#', '');
-    return [
-      parseInt(hex.substring(0,2), 16) / 255,
-      parseInt(hex.substring(2,4), 16) / 255,
-      parseInt(hex.substring(4,6), 16) / 255,
-    ];
+'<g transform="translate(200,40)" filter="url(#softShadow)">'+
+  '<path d="M -55,40 C -65,20 -60,-15 -50,-35 C -40,-55 -20,-68 0,-70 C 20,-68 40,-55 50,-35 C 60,-15 65,20 55,40 L 58,90 C 60,120 55,140 45,150 L -45,150 C -55,140 -60,120 -58,90 Z" fill="#4E342E"/>'+
+
+  '<rect x="-12" y="100" width="24" height="30" rx="8" fill="#FDDCB5"/>'+
+
+  '<path d="M -55,128 C -60,125 -65,130 -68,140 L -75,250 C -75,260 -60,270 0,272 C 60,270 75,260 75,250 L 68,140 C 65,130 60,125 55,128 L 40,132 C 20,138 -20,138 -40,132 Z" fill="'+outfitColor+'"/>'+
+  '<path d="M -25,128 C -10,140 10,140 25,128" stroke="'+darken(outfitColor,15)+'" stroke-width="2" fill="none"/>'+
+  '<line x1="0" y1="140" x2="0" y2="270" stroke="'+darken(outfitColor,10)+'" stroke-width="1.5" opacity=".3"/>'+
+
+  '<path d="M -55,135 C -72,140 -90,155 -100,175 L -105,210 C -105,218 -100,222 -92,220 L -85,215 C -80,210 -72,195 -65,175 L -58,150" fill="#FDDCB5"/>'+
+  '<path d="M 55,135 C 72,140 90,155 100,175 L 105,210 C 105,218 100,222 92,220 L 85,215 C 80,210 72,195 65,175 L 58,150" fill="#FDDCB5"/>'+
+  '<circle cx="-100" cy="215" r="10" fill="#FDDCB5"/>'+
+  '<circle cx="100" cy="215" r="10" fill="#FDDCB5"/>'+
+
+  '<rect x="-25" y="265" width="20" height="70" rx="8" fill="#2196F3"/>'+
+  '<rect x="5" y="265" width="20" height="70" rx="8" fill="#2196F3"/>'+
+  '<ellipse cx="-15" cy="340" rx="15" ry="8" fill="#E53935"/>'+
+  '<ellipse cx="15" cy="340" rx="15" ry="8" fill="#E53935"/>'+
+
+  '<ellipse cx="0" cy="45" rx="48" ry="52" fill="#FDDCB5"/>'+
+
+  '<path d="M -48,35 C -50,10 -45,-15 -35,-32 C -25,-48 -10,-55 0,-56 C 10,-55 25,-48 35,-32 C 45,-15 50,10 48,35 L 45,15 C 40,-5 25,-20 0,-22 C -25,-20 -40,-5 -45,15 Z" fill="#4E342E"/>'+
+  '<path d="M -48,35 C -52,50 -55,75 -52,95 C -50,105 -45,100 -44,85 L -46,50 Z" fill="#4E342E"/>'+
+  '<path d="M 48,35 C 52,50 55,75 52,95 C 50,105 45,100 44,85 L 46,50 Z" fill="#4E342E"/>'+
+
+  '<ellipse cx="-18" cy="35" rx="12" ry="14" fill="#fff"/>'+
+  '<ellipse cx="18" cy="35" rx="12" ry="14" fill="#fff"/>'+
+  '<circle cx="-16" cy="37" r="7" fill="#5D4037"/>'+
+  '<circle cx="20" cy="37" r="7" fill="#5D4037"/>'+
+  '<circle cx="-14" cy="35" r="3" fill="#111"/>'+
+  '<circle cx="22" cy="35" r="3" fill="#111"/>'+
+  '<circle cx="-12" cy="32" r="2" fill="#fff"/>'+
+  '<circle cx="24" cy="32" r="2" fill="#fff"/>'+
+  '<path d="M -30,30 C -28,26 -24,24 -20,24" stroke="#333" stroke-width="1.5" fill="none"/>'+
+  '<path d="M 30,30 C 28,26 24,24 20,24" stroke="#333" stroke-width="1.5" fill="none"/>'+
+
+  '<path d="M -28,18 C -24,13 -14,12 -8,15" stroke="#4E342E" stroke-width="2.5" fill="none" stroke-linecap="round"/>'+
+  '<path d="M 28,18 C 24,13 14,12 8,15" stroke="#4E342E" stroke-width="2.5" fill="none" stroke-linecap="round"/>'+
+
+  '<path d="M 0,45 C -3,52 -2,56 0,58 C 2,56 3,52 0,45" fill="#E8C9A0"/>'+
+
+  '<path d="M -22,65 C -15,82 15,82 22,65" stroke="#C62828" stroke-width="3" fill="#E53935"/>'+
+  '<path d="M -18,67 C -12,75 12,75 18,67" fill="#fff"/>'+
+  '<path d="M -20,72 C -12,82 12,82 20,72" fill="#E57373" opacity=".5"/>'+
+
+  '<circle cx="-32" cy="58" r="8" fill="#FF8A80" opacity=".35"/>'+
+  '<circle cx="32" cy="58" r="8" fill="#FF8A80" opacity=".35"/>'+
+
+  (acc==='microphone'?'<g transform="translate(105,200)"><rect x="-4" y="-35" width="8" height="40" rx="3" fill="#555"/><ellipse cx="0" cy="-40" rx="10" ry="12" fill="#333"/><ellipse cx="0" cy="-40" rx="8" ry="10" fill="#666"/></g>':'')+
+  (acc==='book'?'<g transform="translate(-105,200)"><rect x="-18" y="-22" width="36" height="44" rx="3" fill="#2196F3"/><rect x="-15" y="-19" width="30" height="38" rx="2" fill="#BBDEFB"/><text x="0" y="2" text-anchor="middle" font-size="10" fill="#1565C0" font-weight="700">ABC</text><rect x="-18" y="-22" width="5" height="44" rx="1" fill="#1565C0"/></g>':'')+
+  (acc==='puppets'?'<g transform="translate(108,195)"><ellipse cx="0" cy="-15" rx="12" ry="14" fill="#FDD835"/><circle cx="-4" cy="-18" r="2.5" fill="#111"/><circle cx="5" cy="-18" r="2.5" fill="#111"/><path d="M -3,-10 Q 1,-6 5,-10" stroke="#333" stroke-width="1.5" fill="none"/><rect x="-6" y="-2" width="12" height="20" rx="4" fill="#FDD835"/></g><g transform="translate(-108,200)"><ellipse cx="0" cy="-15" rx="12" ry="14" fill="#FF7043"/><circle cx="-4" cy="-18" r="2.5" fill="#111"/><circle cx="5" cy="-18" r="2.5" fill="#111"/><path d="M -4,-10 Q 0,-5 4,-10" stroke="#333" stroke-width="1.5" fill="none"/><rect x="-6" y="-2" width="12" height="20" rx="4" fill="#FF7043"/></g>':'')+
+
+  (cross==='spartan-helmet'?
+    '<g transform="translate(0,45) scale(0.55)">'+
+      '<path d="M -42,12 C -46,0 -48,-30 -45,-52 C -41,-75 -26,-90 0,-94 C 26,-90 41,-75 45,-52 C 48,-30 46,0 42,12 L 38,22 C 30,28 16,32 0,32 C -16,32 -30,28 -38,22 Z" fill="#5B7744"/>'+
+      '<path d="M -34,-48 C -30,-55 -17,-61 0,-63 C 17,-61 30,-55 34,-48 L 32,-15 C 28,-8 16,-2 0,0 C -16,-2 -28,-8 -32,-15 Z" fill="#F4A500" filter="url(#vglow)"/>'+
+    '</g>':'')+
+
+'</g>'+
+
+'<g id="rachelBubbles"></g>'+
+
+'</svg>'+
+'<button class="fun-btn" onclick="sayItWithMe()">🗣️ SAY IT WITH ME!</button>';
+}
+
+var BABY_WORDS=["MAMA","DADA","BALL","DOG","CAT","BABY","HI","BYE BYE","MORE","MILK","WATER","UP","PLEASE","THANK YOU","HAPPY","LOVE","STAR","MOON","FISH","DUCK"];
+function sayItWithMe(){
+  var container=document.getElementById('rachelBubbles');
+  if(!container)return;
+  var words=[];
+  for(var i=0;i<3;i++){
+    var w=BABY_WORDS[Math.floor(Math.random()*BABY_WORDS.length)];
+    var x=80+Math.random()*240,y=50+i*45+Math.random()*20;
+    var colors=['#E53935','#1E88E5','#43A047','#FB8C00','#8E24AA','#00ACC1'];
+    var c=colors[Math.floor(Math.random()*colors.length)];
+    words.push('<g><rect x="'+(x-30)+'" y="'+(y-18)+'" width="'+(w.length*12+20)+'" height="32" rx="16" fill="'+c+'" opacity=".9"><animate attributeName="opacity" from="0" to=".9" dur="0.3s" begin="'+i*0.2+'s" fill="freeze"/></rect><text x="'+(x+w.length*6-20)+'" y="'+(y+5)+'" text-anchor="middle" fill="#fff" font-size="16" font-weight="800" opacity="0">'+w+'!<animate attributeName="opacity" from="0" to="1" dur="0.3s" begin="'+i*0.2+'s" fill="freeze"/></text></g>');
   }
+  container.innerHTML=words.join('');
+  setTimeout(function(){container.innerHTML=''},2500);
+  showBubble("Can you say... "+BABY_WORDS[Math.floor(Math.random()*BABY_WORDS.length)]+"? 🎉");
+}
 
-  function randomHex() {
-    return '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+// ═══════════ CONTROLS ═══════════
+function renderControls(){
+  var el=document.getElementById('controls');
+  switch(S.mode){
+    case 'spartan':el.innerHTML=spartanControls();break;
+    case 'peppa':el.innerHTML=peppaControls();break;
+    case 'bluey':el.innerHTML=blueyControls();break;
+    case 'rachel':el.innerHTML=rachelControls();break;
   }
+  el.innerHTML+='<button class="xover-btn" onclick="doCrossover()">🌀 CROSSOVER MASHUP</button>';
+}
 
-  function log(msg) {
-    var el = document.getElementById('material-log');
-    el.textContent += msg + '\n';
-    el.scrollTop = el.scrollHeight;
-    console.log('[MJOLNIR]', msg);
+function ob(stateKey,value,label){
+  var cur=S[S.mode][stateKey];
+  return '<button class="ob'+(cur===value?' sel':'')+'" onclick="setOpt(\''+stateKey+'\',\''+value+'\')">'+label+'</button>';
+}
+
+function setOpt(key,val){S[S.mode][key]=val;S.crossover=null;render();renderControls();saveURL()}
+function setColor(key,val){S[S.mode][key]=val;S.crossover=null;render();saveURL()}
+
+function spartanControls(){
+  return '<div class="cg"><label>⛑️ Helmet</label><div class="og">'+
+    ob('helmet','mark-v','Mark V')+ob('helmet','mark-vi','Mark VI')+ob('helmet','eva','EVA')+ob('helmet','recon','Recon')+ob('helmet','odst','ODST')+
+    '</div></div>'+
+    '<div class="cg"><label>🛡️ Chest</label><div class="og">'+
+    ob('chest','standard','Standard')+ob('chest','tactical','Tactical')+ob('chest','commando','Commando')+ob('chest','heavy','Heavy')+
+    '</div></div>'+
+    '<div class="cg"><label>💪 Shoulders</label><div class="og">'+
+    ob('shoulder','standard','Standard')+ob('shoulder','gungnir','Gungnir')+ob('shoulder','security','Security')+ob('shoulder','hayabusa','Hayabusa')+
+    '</div></div>'+
+    '<div class="cg"><label>🎨 Colors</label>'+
+    '<div class="cr"><input type="color" value="'+S.spartan.primary+'" onchange="setColor(\'primary\',this.value)"><span>Primary Armor</span></div>'+
+    '<div class="cr"><input type="color" value="'+S.spartan.secondary+'" onchange="setColor(\'secondary\',this.value)"><span>Secondary</span></div>'+
+    '<div class="cr"><input type="color" value="'+S.spartan.visor+'" onchange="setColor(\'visor\',this.value)"><span>Visor Glow</span></div>'+
+    '</div>';
+}
+
+function peppaControls(){
+  return '<div class="cg"><label>👗 Dress Color</label>'+
+    '<div class="cr"><input type="color" value="'+S.peppa.dress+'" onchange="setColor(\'dress\',this.value)"><span>Dress</span></div>'+
+    '</div>'+
+    '<div class="cg"><label>✨ Accessory</label><div class="og">'+
+    ob('accessory','none','None')+ob('accessory','crown','Crown 👑')+ob('accessory','hat','Hat 🎩')+ob('accessory','sunglasses','Shades 😎')+ob('accessory','boots','Boots 👢')+
+    '</div></div>'+
+    '<div class="cg"><label>🖼️ Background</label><div class="og">'+
+    ob('bg','puddle','Muddy Puddle')+ob('bg','house','House')+ob('bg','park','Park')+
+    '</div></div>';
+}
+
+function blueyControls(){
+  return '<div class="cg"><label>👪 Character</label><div class="og">'+
+    ob('character','bluey','Bluey 🐶')+ob('character','bingo','Bingo 🦊')+ob('character','bandit','Bandit 🐕')+ob('character','chilli','Chilli 🐕‍🦺')+
+    '</div></div>'+
+    '<div class="cg"><label>👔 Outfit</label><div class="og">'+
+    ob('outfit','default','Default')+ob('outfit','pirate','Pirate 🏴‍☠️')+ob('outfit','fairy','Fairy 🧚')+ob('outfit','doctor','Doctor 🩺')+ob('outfit','grannies','Grannies 👵')+
+    '</div></div>'+
+    '<div class="cg"><label>✨ Accessory</label><div class="og">'+
+    ob('accessory','none','None')+ob('accessory','cape','Cape 🦸')+ob('accessory','crown','Crown 👑')+ob('accessory','wand','Wand ✨')+
+    '</div></div>';
+}
+
+function rachelControls(){
+  return '<div class="cg"><label>👚 Outfit Color</label>'+
+    '<div class="cr"><input type="color" value="'+S.rachel.outfit+'" onchange="setColor(\'outfit\',this.value)"><span>Outfit</span></div>'+
+    '</div>'+
+    '<div class="cg"><label>✨ Accessory</label><div class="og">'+
+    ob('accessory','none','None')+ob('accessory','microphone','Mic 🎤')+ob('accessory','book','Book 📖')+ob('accessory','puppets','Puppets 🧸')+
+    '</div></div>'+
+    '<div class="cg"><label>🖼️ Background</label><div class="og">'+
+    ob('bg','classroom','Classroom')+ob('bg','playground','Playground')+ob('bg','music','Music Room')+
+    '</div></div>';
+}
+
+// ═══════════ CROSSOVER ═══════════
+var CROSSOVERS={
+  spartan:['peppa-tail','bluey-ears','rachel-mic'],
+  peppa:['spartan-helmet'],
+  bluey:['spartan-chest','peppa-dress'],
+  rachel:['spartan-helmet']
+};
+
+function doCrossover(){
+  var opts=CROSSOVERS[S.mode]||[];
+  if(!opts.length)return;
+  var pick=opts[Math.floor(Math.random()*opts.length)];
+  S.crossover=S.crossover===pick?null:pick;
+  render();
+  if(S.crossover){
+    var msgs={
+      'peppa-tail':'Spartans are tactical... and FABULOUS.',
+      'bluey-ears':'Floppy ears improve helmet aerodynamics by 0%.',
+      'rachel-mic':'Master Chief, can you say... MAMA?',
+      'spartan-helmet':'Tactical visor: ENGAGED. Oink.',
+      'spartan-chest':'Bluey has +50 armor. Still a good girl.',
+      'peppa-dress':"It's not a dress. It's TACTICAL FASHION."
+    };
+    showBubble(msgs[pick]||'CROSSOVER ACTIVATED!');
   }
+}
 
-  function setLoadingStatus(text) {
-    var el = document.getElementById('loading-status');
-    if (el) el.textContent = text;
+// ═══════════ SPEECH BUBBLES ═══════════
+var bubbleTimer=null;
+function showBubble(text){
+  var vp=document.getElementById('viewport');
+  var old=vp.querySelector('.speech-bubble');
+  if(old)old.remove();
+  clearTimeout(bubbleTimer);
+  var b=document.createElement('div');
+  b.className='speech-bubble';
+  b.textContent=text;
+  b.style.top='10px';
+  b.style.left='50%';
+  b.style.transform='translateX(-50%)';
+  vp.appendChild(b);
+  bubbleTimer=setTimeout(function(){b.remove()},3000);
+}
+
+// ═══════════ INIT ═══════════
+function render(){
+  var vp=document.getElementById('viewport');
+  switch(S.mode){
+    case 'spartan':vp.innerHTML=renderSpartan();break;
+    case 'peppa':vp.innerHTML=renderPeppa();break;
+    case 'bluey':vp.innerHTML=renderBluey();break;
+    case 'rachel':vp.innerHTML=renderRachel();break;
   }
+}
 
-  // ========== MATERIAL MAPPING ==========
-  function classifyMaterials(materials) {
-    log('=== MATERIAL DISCOVERY ===');
-    log('Found ' + materials.length + ' materials total\n');
-
-    var spartans = Object.keys(SPARTAN_KEYS);
-    for (var s = 0; s < spartans.length; s++) {
-      state.materialMap[spartans[s]] = { primary: [], secondary: [], visor: [], undersuit: [] };
-    }
-
-    var unclassified = [];
-
-    materials.forEach(function(mat, i) {
-      var name = (mat.name || '').toLowerCase();
-      log('  [' + i + '] "' + mat.name + '" channels: ' + Object.keys(mat.channels || {}).join(', '));
-
-      // Store defaults
-      var albedo = mat.channels && mat.channels.AlbedoPBR && mat.channels.AlbedoPBR.color
-        ? mat.channels.AlbedoPBR.color.slice() : [1,1,1];
-      var emissive = mat.channels && mat.channels.EmitColor && mat.channels.EmitColor.color
-        ? mat.channels.EmitColor.color.slice() : [0,0,0];
-      state.defaultMaterials[mat.name] = { albedo: albedo, emissive: emissive };
-
-      // Match to spartan
-      var matchedSpartan = null;
-      for (var sk in SPARTAN_KEYS) {
-        var keywords = SPARTAN_KEYS[sk];
-        for (var ki = 0; ki < keywords.length; ki++) {
-          if (name.indexOf(keywords[ki]) !== -1) {
-            matchedSpartan = sk;
-            break;
-          }
-        }
-        if (matchedSpartan) break;
-      }
-
-      if (!matchedSpartan) {
-        unclassified.push(mat);
-        return;
-      }
-
-      // Classify type
-      var type = 'primary';
-      for (var cat in CLASSIFY) {
-        var catKeys = CLASSIFY[cat];
-        for (var ci = 0; ci < catKeys.length; ci++) {
-          if (name.indexOf(catKeys[ci]) !== -1) {
-            type = cat;
-            break;
-          }
-        }
-        if (type !== 'primary') break;
-      }
-
-      state.materialMap[matchedSpartan][type].push(mat);
-      log('    -> ' + matchedSpartan + ' / ' + type);
-    });
-
-    // Check if we found anything
-    var totalMapped = 0;
-    for (var sp in state.materialMap) {
-      var groups = state.materialMap[sp];
-      totalMapped += groups.primary.length + groups.secondary.length + groups.visor.length;
-    }
-
-    if (totalMapped === 0) {
-      log('\nNo spartan-specific materials found. Assigning all to all spartans.');
-      materials.forEach(function(mat) {
-        var name = (mat.name || '').toLowerCase();
-        var type = 'primary';
-        for (var cat in CLASSIFY) {
-          var catKeys = CLASSIFY[cat];
-          for (var ci = 0; ci < catKeys.length; ci++) {
-            if (name.indexOf(catKeys[ci]) !== -1) { type = cat; break; }
-          }
-          if (type !== 'primary') break;
-        }
-        for (var sp in state.materialMap) {
-          state.materialMap[sp][type].push(mat);
-        }
-      });
-    }
-
-    // Shared visor materials
-    if (unclassified.length > 0) {
-      log('\n' + unclassified.length + ' unclassified materials');
-      unclassified.forEach(function(mat) {
-        var name = (mat.name || '').toLowerCase();
-        var isVisor = false;
-        for (var vi = 0; vi < CLASSIFY.visor.length; vi++) {
-          if (name.indexOf(CLASSIFY.visor[vi]) !== -1) { isVisor = true; break; }
-        }
-        if (isVisor) {
-          for (var sp in state.materialMap) {
-            state.materialMap[sp].visor.push(mat);
-          }
-        }
-      });
-    }
-
-    log('\n=== MATERIAL MAP SUMMARY ===');
-    for (var sp2 in state.materialMap) {
-      var g = state.materialMap[sp2];
-      log(sp2 + ': primary=' + g.primary.length + ' secondary=' + g.secondary.length + ' visor=' + g.visor.length + ' undersuit=' + g.undersuit.length);
-    }
-    log('');
-  }
-
-  // ========== NODE MAPPING ==========
-  function classifyNodes(nodeMap) {
-    log('=== NODE DISCOVERY ===');
-
-    for (var sp in SPARTAN_KEYS) {
-      state.nodeGroups[sp] = [];
-    }
-
-    var allNodes = Object.values(nodeMap);
-    log('Found ' + allNodes.length + ' nodes total\n');
-
-    // Find top-level groups for each spartan
-    var rootGroups = {};
-    allNodes.forEach(function(node) {
-      var name = (node.name || '').toLowerCase();
-      for (var sp in SPARTAN_KEYS) {
-        var keywords = SPARTAN_KEYS[sp];
-        for (var ki = 0; ki < keywords.length; ki++) {
-          if (name.indexOf(keywords[ki]) !== -1) {
-            if (!rootGroups[sp]) rootGroups[sp] = {};
-            if (!rootGroups[sp][node.instanceID]) {
-              rootGroups[sp][node.instanceID] = true;
-              state.nodeGroups[sp].push(node.instanceID);
-              if (node.type === 'Group' || node.type === 'MatrixTransform') {
-                log('  Node "' + node.name + '" [' + node.type + '] -> ' + sp + ' (ID: ' + node.instanceID + ')');
-              }
-            }
-            break;
-          }
-        }
-      }
-    });
-
-    // Top-level nodes debug
-    var topNodes = allNodes.filter(function(n) {
-      return (n.type === 'Group' || n.type === 'MatrixTransform') && (!n.depth || n.depth <= 2);
-    });
-    if (topNodes.length > 0 && topNodes.length < 50) {
-      log('\nTop-level groups:');
-      topNodes.forEach(function(n) {
-        log('  "' + n.name + '" type=' + n.type + ' id=' + n.instanceID);
-      });
-    }
-
-    log('\n=== NODE MAP SUMMARY ===');
-    for (var sp2 in state.nodeGroups) {
-      log(sp2 + ': ' + state.nodeGroups[sp2].length + ' nodes');
-    }
-    log('');
-  }
-
-  // ========== APPLY COLORS ==========
-  function applyColors() {
-    if (!state.api) return;
-
-    var spartan = state.activeSpartan;
-    var groups = state.materialMap[spartan];
-    if (!groups) return;
-
-    var primaryRGB = hexToRGB01(state.primaryColor);
-    var secondaryRGB = hexToRGB01(state.secondaryColor);
-    var visorRGB = hexToRGB01(state.visorColor);
-
-    groups.primary.forEach(function(mat) {
-      if (mat.channels && mat.channels.AlbedoPBR) {
-        mat.channels.AlbedoPBR.color = primaryRGB;
-        if (mat.channels.DiffuseColor) mat.channels.DiffuseColor.color = primaryRGB;
-      }
-      state.api.setMaterial(mat, function() {});
-    });
-
-    groups.secondary.forEach(function(mat) {
-      if (mat.channels && mat.channels.AlbedoPBR) {
-        mat.channels.AlbedoPBR.color = secondaryRGB;
-        if (mat.channels.DiffuseColor) mat.channels.DiffuseColor.color = secondaryRGB;
-      }
-      state.api.setMaterial(mat, function() {});
-    });
-
-    groups.visor.forEach(function(mat) {
-      if (mat.channels) {
-        if (mat.channels.AlbedoPBR) mat.channels.AlbedoPBR.color = visorRGB;
-        if (mat.channels.EmitColor) {
-          mat.channels.EmitColor.enable = true;
-          mat.channels.EmitColor.color = visorRGB;
-          mat.channels.EmitColor.factor = 0.7;
-        }
-        if (mat.channels.DiffuseColor) mat.channels.DiffuseColor.color = visorRGB;
-      }
-      state.api.setMaterial(mat, function() {});
-    });
-  }
-
-  // ========== SHOW/HIDE SPARTANS ==========
-  function showSpartan(targetSpartan) {
-    if (!state.api || !state.nodeMap) return;
-
-    var hasGroups = false;
-    for (var sp in state.nodeGroups) {
-      if (state.nodeGroups[sp].length > 0) { hasGroups = true; break; }
-    }
-    if (!hasGroups) {
-      log('No node groups discovered - cannot show/hide');
-      return;
-    }
-
-    for (var sp2 in state.nodeGroups) {
-      var ids = state.nodeGroups[sp2];
-      for (var i = 0; i < ids.length; i++) {
-        if (sp2 === targetSpartan) {
-          state.api.show(ids[i]);
-        } else {
-          state.api.hide(ids[i]);
-        }
-      }
-    }
-  }
-
-  // ========== CAMERA ==========
-  var CAMERA_POSITIONS = {
-    masterchief: { eye: [2, 1.5, 2],   target: [0, 0.8, 0] },
-    fred:        { eye: [-2, 1.5, 2],  target: [-1, 0.8, 0] },
-    kelly:       { eye: [0, 1.5, 3],   target: [0, 0.8, 0] },
-    linda:       { eye: [2, 1.5, -1],  target: [1, 0.8, 0] },
-  };
-
-  function focusCamera(spartan) {
-    if (!state.api) return;
-    var cam = CAMERA_POSITIONS[spartan] || CAMERA_POSITIONS.masterchief;
-    state.api.setCameraLookAt(cam.eye, cam.target, 1.2);
-  }
-
-  // ========== BUILD PRESET UI ==========
-  function buildPresetUI() {
-    var grid = document.getElementById('preset-grid');
-    PRESETS.forEach(function(preset) {
-      var btn = document.createElement('button');
-      btn.className = 'preset-btn';
-      btn.innerHTML =
-        '<div class="preset-colors">' +
-          '<div class="preset-swatch" style="background:' + preset.primary + '"></div>' +
-          '<div class="preset-swatch" style="background:' + preset.secondary + '"></div>' +
-          '<div class="preset-swatch" style="background:' + preset.visor + '"></div>' +
-        '</div>' +
-        '<span class="preset-name">' + preset.name + '</span>';
-      btn.addEventListener('click', function() {
-        state.primaryColor = preset.primary;
-        state.secondaryColor = preset.secondary;
-        state.visorColor = preset.visor;
-        document.getElementById('color-primary').value = preset.primary;
-        document.getElementById('color-secondary').value = preset.secondary;
-        document.getElementById('hex-primary').textContent = preset.primary.toUpperCase();
-        document.getElementById('hex-secondary').textContent = preset.secondary.toUpperCase();
-        document.querySelectorAll('.visor-btn').forEach(function(v) { v.classList.remove('active'); });
-        document.querySelectorAll('.preset-btn').forEach(function(p) { p.classList.remove('active'); });
-        btn.classList.add('active');
-        applyColors();
-      });
-      grid.appendChild(btn);
-    });
-  }
-
-  // ========== INITIALIZE VIEWER ==========
-  function initViewer() {
-    var iframe = document.getElementById('api-frame');
-    var client = new Sketchfab(iframe);
-
-    setLoadingStatus('CONNECTING TO SKETCHFAB...');
-
-    client.init('c727e95065fc40b999cdfdc6ca4dc394', {
-      success: function(api) {
-        state.api = api;
-        setLoadingStatus('LOADING 3D MODEL...');
-
-        api.start();
-
-        api.addEventListener('viewerready', function() {
-          setLoadingStatus('SCANNING MATERIALS...');
-          log('Viewer ready!');
-
-          api.getMaterialList(function(err, materials) {
-            if (err) {
-              log('ERROR getting materials: ' + err);
-              return;
-            }
-            state.materials = materials;
-            classifyMaterials(materials);
-
-            setLoadingStatus('MAPPING NODES...');
-            api.getNodeMap(function(err2, nodeMap) {
-              if (!err2 && nodeMap) {
-                state.nodeMap = nodeMap;
-                classifyNodes(nodeMap);
-              } else {
-                log('Could not get node map: ' + (err2 || 'empty'));
-              }
-
-              setLoadingStatus('FORGE READY');
-              document.getElementById('status-dot').classList.add('connected');
-
-              setTimeout(function() {
-                document.getElementById('loading-overlay').classList.add('hidden');
-              }, 600);
-
-              log('=== MJOLNIR FORGE READY ===\n');
-            });
-          });
-        });
-      },
-      error: function() {
-        setLoadingStatus('VIEWER ERROR - REFRESH TO RETRY');
-        document.getElementById('status-dot').classList.add('error');
-        log('ERROR: Sketchfab viewer failed to initialize');
-      },
-      ui_controls: 0,
-      ui_infos: 0,
-      ui_watermark: 0,
-      ui_watermark_link: 0,
-      ui_stop: 0,
-      ui_help: 0,
-      ui_settings: 0,
-      ui_inspector: 0,
-      ui_annotations: 0,
-      ui_fullscreen: 0,
-      ui_hint: 0,
-      ui_loading: 0,
-      autostart: 1,
-      transparent: 0,
-      autospin: 0,
-    });
-  }
-
-  // ========== EVENT HANDLERS ==========
-  function setupEvents() {
-    // Panel toggle
-    document.getElementById('toggle-panel').addEventListener('click', function() {
-      state.panelOpen = !state.panelOpen;
-      document.getElementById('control-panel').classList.toggle('collapsed', !state.panelOpen);
-    });
-
-    // Character selector
-    document.querySelectorAll('.char-btn').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        var spartan = btn.dataset.spartan;
-        state.activeSpartan = spartan;
-        document.querySelectorAll('.char-btn').forEach(function(b) { b.classList.remove('active'); });
-        btn.classList.add('active');
-        showSpartan(spartan);
-        focusCamera(spartan);
-        applyColors();
-      });
-    });
-
-    // Primary color
-    document.getElementById('color-primary').addEventListener('input', function(e) {
-      state.primaryColor = e.target.value;
-      document.getElementById('hex-primary').textContent = e.target.value.toUpperCase();
-      applyColors();
-    });
-
-    // Secondary color
-    document.getElementById('color-secondary').addEventListener('input', function(e) {
-      state.secondaryColor = e.target.value;
-      document.getElementById('hex-secondary').textContent = e.target.value.toUpperCase();
-      applyColors();
-    });
-
-    // Visor presets
-    document.querySelectorAll('.visor-btn').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        state.visorColor = btn.dataset.color;
-        document.querySelectorAll('.visor-btn').forEach(function(v) { v.classList.remove('active'); });
-        btn.classList.add('active');
-        applyColors();
-      });
-    });
-
-    // Random
-    document.getElementById('btn-random').addEventListener('click', function() {
-      state.primaryColor = randomHex();
-      state.secondaryColor = randomHex();
-      var visorColors = ['#ffd54f','#42a5f5','#bdbdbd','#ef5350','#66bb6a','#ab47bc','#ff9800','#e91e63'];
-      state.visorColor = visorColors[Math.floor(Math.random() * visorColors.length)];
-      document.getElementById('color-primary').value = state.primaryColor;
-      document.getElementById('color-secondary').value = state.secondaryColor;
-      document.getElementById('hex-primary').textContent = state.primaryColor.toUpperCase();
-      document.getElementById('hex-secondary').textContent = state.secondaryColor.toUpperCase();
-      document.querySelectorAll('.visor-btn').forEach(function(v) { v.classList.remove('active'); });
-      document.querySelectorAll('.preset-btn').forEach(function(p) { p.classList.remove('active'); });
-      applyColors();
-    });
-
-    // Reset
-    document.getElementById('btn-reset').addEventListener('click', function() {
-      if (!state.api) return;
-      state.materials.forEach(function(mat) {
-        var defaults = state.defaultMaterials[mat.name];
-        if (defaults && mat.channels) {
-          if (mat.channels.AlbedoPBR) mat.channels.AlbedoPBR.color = defaults.albedo.slice();
-          if (mat.channels.EmitColor) mat.channels.EmitColor.color = defaults.emissive.slice();
-          if (mat.channels.DiffuseColor) mat.channels.DiffuseColor.color = defaults.albedo.slice();
-          state.api.setMaterial(mat, function() {});
-        }
-      });
-
-      state.primaryColor = '#4a7c2e';
-      state.secondaryColor = '#2e4a1e';
-      state.visorColor = '#ffd54f';
-      document.getElementById('color-primary').value = '#4a7c2e';
-      document.getElementById('color-secondary').value = '#2e4a1e';
-      document.getElementById('hex-primary').textContent = '#4A7C2E';
-      document.getElementById('hex-secondary').textContent = '#2E4A1E';
-      document.querySelectorAll('.visor-btn').forEach(function(v) { v.classList.remove('active'); });
-      document.querySelector('.visor-btn[data-color="#ffd54f"]').classList.add('active');
-      document.querySelectorAll('.preset-btn').forEach(function(p) { p.classList.remove('active'); });
-
-      if (state.nodeMap) {
-        for (var sp in state.nodeGroups) {
-          var ids = state.nodeGroups[sp];
-          for (var i = 0; i < ids.length; i++) {
-            state.api.show(ids[i]);
-          }
-        }
-      }
-    });
-
-    // Debug toggle
-    document.getElementById('debug-toggle').addEventListener('click', function() {
-      document.getElementById('material-log').classList.toggle('visible');
-    });
-  }
-
-  // ========== INIT ==========
-  document.addEventListener('DOMContentLoaded', function() {
-    buildPresetUI();
-    setupEvents();
-    initViewer();
-  });
-
-})();
+loadURL();
+renderModeBar();
+render();
+renderControls();
 </script>
 </body>
 </html>
